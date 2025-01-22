@@ -1,0 +1,55 @@
+{
+  "name": "@hill-98/electron-forge-plugin-vite",
+  "version": "1.0.0",
+  "description": "vite plugin for electron forge",
+  "keywords": [
+    "electron",
+    "forge",
+    "plugin",
+    "vite"
+  ],
+  "files": [
+    "./dist",
+    "./types"
+  ],
+  "main": "./dist/electron-forge-plugin-vite.js",
+  "types": "./types/index.d.ts",
+  "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hill-98/electron-forge-plugin-vite.git"
+  },
+  "bugs": "https://github.com/Hill-98/electron-forge-plugin-vite/issues",
+  "author": "Zhong Lufan <lufanzhong@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "npm run check && npm run test && npm run build",
+    "build": "vite build",
+    "check": "biome check && tsc --noEmit",
+    "test": "node --experimental-strip-types --experimental-test-coverage --test",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">= 16.4.0"
+  },
+  "dependencies": {
+    "@electron-forge/plugin-base": "^7.6.0",
+    "@electron-forge/shared-types": "^7.6.0",
+    "lodash.isempty": "^4.4.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/lodash.isempty": "^4.4.9",
+    "@types/node": "latest",
+    "electron": "34.0.0",
+    "husky": "^9.1.6",
+    "typescript": "~5.7.3",
+    "vite": "^6.0.0"
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0 | ^6.0.0"
+  },
+  "volta": {
+    "node": "22.13.0"
+  }
+}
