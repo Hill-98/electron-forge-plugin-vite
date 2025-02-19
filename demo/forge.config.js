@@ -1,4 +1,4 @@
-const { VitePlugin } = require('../')
+import { VitePlugin } from '../dist/electron-forge-plugin-vite.js'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {
@@ -11,4 +11,4 @@ const config = {
   plugins: [new VitePlugin({})],
 }
 
-module.exports = config
+export default config
