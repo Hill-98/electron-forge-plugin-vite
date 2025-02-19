@@ -110,6 +110,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
         publicDir: 'resources',
         ...configs.main,
         build: {
+          copyPublicDir: false,
           lib: {
             entry: ENTRY.main.find((e) => exists(e)) ?? [],
             formats: this.#pkgType === 'module' ? ['es'] : ['cjs'],
@@ -150,6 +151,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
         publicDir: 'resources',
         ...configs.preload,
         build: {
+          copyPublicDir: false,
           lib: {
             entry: ENTRY.preload.find((e) => exists(e)) ?? [],
             formats: ['cjs'],
