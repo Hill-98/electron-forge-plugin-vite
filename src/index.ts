@@ -147,6 +147,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           mainFields: ['module', 'jsnext:main', 'jsnext'],
           ...configs.main.resolve,
         },
+        ssr: {
+          noExternal: true,
+          ...configs.main.ssr,
+        },
       },
       preload: {
         envPrefix: ['PRELOAD_VITE_', 'VITE_'],
@@ -182,6 +186,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           ...configs.preload.build,
         },
         mode,
+        ssr: {
+          noExternal: true,
+          ...configs.preload.ssr,
+        },
       },
       renderer: {
         root: 'src/renderer',
