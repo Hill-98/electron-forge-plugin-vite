@@ -123,8 +123,8 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           reportCompressedSize: false,
           rollupOptions: {
             external:
-              configs.main.build?.rollupOptions?.external === undefined &&
-              Array.isArray(configs.main.build?.rollupOptions?.external)
+              configs.main.build?.rollupOptions?.external === undefined ||
+              Array.isArray(configs.main.build.rollupOptions.external)
                 ? [
                     ...builtinModules,
                     ...builtinModules.map((v) => `node:${v}`),
