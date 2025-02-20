@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Deno</title>
+  <title>Demo</title>
 </head>
 <body>
   <div id="app">Demo test</div>
-  <script>
-    document.write(window.TEST_TEXT)
+  <script type="module">
+    document.title = `Demo (build on ${import.meta.env.VITE_BUILD_PLATFORM})`
+    document.body.append(document.createTextNode(window.TEST_TEXT))
   </script>
 </body>
 </html>

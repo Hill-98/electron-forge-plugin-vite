@@ -63,6 +63,8 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     this.getHooks = this.getHooks.bind(this)
     // fix https://github.com/electron/forge/pull/3809
     this.startLogic = this.startLogic.bind(this)
+
+    process.env.VITE_BUILD_PLATFORM = process.platform
   }
 
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
