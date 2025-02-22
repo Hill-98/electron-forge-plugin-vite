@@ -1,4 +1,5 @@
 import { existsSync as exists } from 'node:fs'
+import inspector from 'node:inspector'
 import { builtinModules } from 'node:module'
 import { PluginBase } from '@electron-forge/plugin-base'
 import type {
@@ -39,6 +40,9 @@ const ENTRY = {
     'src/preload/preload.ts',
   ],
 }
+
+const isDebug = inspector.url() !== undefined
+
 export function defineConfig(configs: VitePluginConfigOptions['configs']) {
   return configs
 }
@@ -61,8 +65,6 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     this.config.configs ??= {}
 
     this.getHooks = this.getHooks.bind(this)
-    // fix https://github.com/electron/forge/pull/3809
-    this.startLogic = this.startLogic.bind(this)
 
     process.env.VITE_BUILD_PLATFORM = process.platform
   }
@@ -104,7 +106,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     mode: string,
     configs: ViteInternalConfigOptions,
   ): Promise<ViteInternalConfigOptions> {
-    const sourcemap = mode === 'development' ? 'inline' : false
+    const sourcemap = isDebug && mode === 'development' ? 'inline' : false
 
     return {
       main: {
@@ -251,7 +253,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
       result = await this.#mergeConfigs(mode, result)
     }
 
-    if (this.config.dumpConfigs) {
+    if (this.config.dumpConfigs || isDebug) {
       console.log(`electron forge vite plugin configs (${mode}) :`)
       console.dir(result, { depth: null })
     }
