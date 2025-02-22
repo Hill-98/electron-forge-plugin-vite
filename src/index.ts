@@ -192,6 +192,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
         },
       },
       renderer: {
+        base: './',
         root: 'src/renderer',
         envPrefix: ['RENDERER_VITE_', 'VITE_'],
         ...configs.renderer,
