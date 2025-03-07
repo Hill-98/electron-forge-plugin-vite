@@ -65,8 +65,6 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     this.config.configs ??= {}
 
     this.getHooks = this.getHooks.bind(this)
-
-    process.env.VITE_BUILD_PLATFORM = process.platform
   }
 
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
@@ -274,13 +272,15 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     return result
   }
 
-  async #prePackageHook(): Promise<void> {
+  async #prePackageHook(_: any, platform: string): Promise<void> {
+    process.env.VITE_BUILD_PLATFORM = platform
     const { main, preload, renderer } = await this.#resolveConfigs('production')
     await this.#buildAll([main, preload, renderer])
     await this.#closeAllViteWatcher()
   }
 
   async #preStartHook(): Promise<void> {
+    process.env.VITE_BUILD_PLATFORM = process.platform
     const { main, preload, renderer } =
       await this.#resolveConfigs('development')
     if (this.#viteServer === null) {
