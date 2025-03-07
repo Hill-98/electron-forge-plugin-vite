@@ -144,6 +144,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           ],
           ...configs.main.build,
         },
+        define: {
+          ...configs.main.define,
+          'import.meta.env.VITE_BUILD_TARGET': '"main"',
+        },
         mode,
         resolve: {
           mainFields: ['module', 'jsnext:main', 'jsnext'],
@@ -187,6 +191,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           ],
           ...configs.preload.build,
         },
+        define: {
+          ...configs.preload.define,
+          'import.meta.env.VITE_BUILD_TARGET': '"preload"',
+        },
         mode,
         ssr: {
           noExternal: true,
@@ -214,6 +222,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
             `chrome${await getElectronChromeVersion()}`,
           ],
           ...configs.renderer.build,
+        },
+        define: {
+          ...configs.renderer.define,
+          'import.meta.env.VITE_BUILD_TARGET': '"renderer"',
         },
         mode,
       },

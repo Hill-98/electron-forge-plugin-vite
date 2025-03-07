@@ -17,3 +17,5 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', app.quit.bind(app))
+
+console.log(`This is the text from ${import.meta.env.VITE_BUILD_TARGET}`)

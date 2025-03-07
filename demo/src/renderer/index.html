@@ -5,10 +5,13 @@
   <title>Demo</title>
 </head>
 <body>
-  <div id="app">Demo test</div>
   <script type="module">
-    document.title = `Demo (build on ${import.meta.env.VITE_BUILD_PLATFORM})`
-    document.body.append(document.createTextNode(window.TEST_TEXT))
+    document.title = `Demo (build platform is ${import.meta.env.VITE_BUILD_PLATFORM})`
+    document.body.append(
+      Object.assign(document.createElement('p'), {
+        textContent: `This is the text from ${import.meta.env.VITE_BUILD_TARGET}`,
+      }),
+    )
   </script>
 </body>
 </html>
