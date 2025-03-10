@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync as exists } from 'node:fs'
 import { readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import electron from 'electron'
 
 const electronVersions = new Map<string, string>()
@@ -13,7 +13,7 @@ export async function getElectronVersion(name: string): Promise<string> {
     return version
   }
 
-  const script = join(
+  const script = resolve(
     tmpdir(),
     'electron-forge-plugin-vite.getElectronVersion.js',
   )
@@ -60,7 +60,7 @@ export async function resolveHtmlEntry(
   dir: string,
 ): Promise<Record<string, string>> {
   const result = {}
-  if (!existsSync(dir)) {
+  if (!exists(dir)) {
     return result
   }
   const files = await readdir(dir, { encoding: 'utf-8', recursive: true })
@@ -68,7 +68,11 @@ export async function resolveHtmlEntry(
     if (file === 'index.html') {
       Reflect.set(result, 'index', resolve(dir, file))
     } else if (basename(file) === 'index.html') {
-      Reflect.set(result, basename(dirname(file)), resolve(dir, file))
+      Reflect.set(
+        result,
+        dirname(file).replace(/[\\\/]/g, '_'),
+        resolve(dir, file),
+      )
     }
   }
   return result
