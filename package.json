@@ -18,6 +18,9 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
+    "./client": {
+      "types": "./types/vite-env.d.ts"
+    },
     "./protocol": {
       "types": "./types/electron-protocol.d.ts",
       "import": "./dist/electron-protocol.js"
