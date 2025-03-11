@@ -1,6 +1,7 @@
 import { existsSync as exists } from 'node:fs'
 import inspector from 'node:inspector'
 import { builtinModules } from 'node:module'
+import { resolve } from 'node:path'
 import { PluginBase } from '@electron-forge/plugin-base'
 import type {
   ElectronProcess,
@@ -273,16 +274,37 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   }
 
   async #prePackageHook(_: any, platform: string): Promise<void> {
-    process.env.VITE_BUILD_PLATFORM = platform
+    const root = resolve('.')
     const { main, preload, renderer } = await this.#resolveConfigs('production')
+
+    process.env.VITE_BUILD_PLATFORM = platform
+    process.env.VITE_RENDERER_URL = 'app://renderer'
+    process.env.VITE_MAIN_PUBLIC_DIR =
+      typeof main.publicDir === 'string'
+        ? resolve(main.publicDir).replace(root, '').substring(1)
+        : undefined
+    process.env.VITE_RENDERER_OUT_DIR = resolve(
+      renderer.root ?? '.',
+      renderer.build?.outDir ?? '.',
+    )
+      .replace(root, '')
+      .substring(1)
+
     await this.#buildAll([main, preload, renderer])
     await this.#closeAllViteWatcher()
   }
 
   async #preStartHook(): Promise<void> {
-    process.env.VITE_BUILD_PLATFORM = process.platform
+    const root = resolve('.')
     const { main, preload, renderer } =
       await this.#resolveConfigs('development')
+
+    process.env.VITE_BUILD_PLATFORM = process.platform
+    process.env.VITE_MAIN_PUBLIC_DIR =
+      typeof main.publicDir === 'string'
+        ? resolve(main.publicDir).replace(root, '').substring(1)
+        : undefined
+
     if (this.#viteServer === null) {
       const { createServer } = await import('vite')
       this.#viteServer = await createServer({ ...renderer, configFile: false })

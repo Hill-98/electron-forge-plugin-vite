@@ -8,8 +8,14 @@ export default defineConfig({
     target: ['node16'],
     minify: false,
     lib: {
-      entry: 'src/index.ts',
-      formats: ['cjs'],
+      entry: ['src/index.ts', 'src/electron-protocol.ts'],
+      formats: ['cjs', 'es'],
+      fileName(format, entryName) {
+        if (entryName === 'electron-protocol') {
+          return 'electron-protocol.js'
+        }
+        return entryName.concat(format === 'cjs' ? '.js' : '.mjs')
+      },
     },
     reportCompressedSize: false,
     rollupOptions: {
@@ -21,5 +27,11 @@ export default defineConfig({
         'electron',
       ],
     },
+  },
+  define: {
+    'import.meta.env.VITE_MAIN_PUBLIC_DIR':
+      'import.meta.env.VITE_MAIN_PUBLIC_DIR',
+    'import.meta.env.VITE_RENDERER_OUT_DIR':
+      'import.meta.env.VITE_RENDERER_OUT_DIR',
   },
 })

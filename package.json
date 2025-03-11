@@ -12,7 +12,19 @@
     "./dist",
     "./types"
   ],
-  "main": "./dist/electron-forge-plugin-vite.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./protocol": {
+      "types": "./types/electron-protocol.d.ts",
+      "import": "./dist/electron-protocol.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./types/index.d.ts",
   "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
   "repository": {
@@ -35,11 +47,13 @@
   "dependencies": {
     "@electron-forge/plugin-base": "^7.7.0",
     "@electron-forge/shared-types": "^7.7.0",
-    "lodash.isempty": "^4.4.0"
+    "lodash.isempty": "^4.4.0",
+    "mime-types": "^2.1.35"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/lodash.isempty": "^4.4.9",
+    "@types/mime-types": "^2.1.4",
     "@types/node": "latest",
     "electron": "34.0.0",
     "husky": "^9.1.6",
