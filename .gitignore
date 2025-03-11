@@ -1,3 +1,6 @@
+# System trash
+.DS_Store
+
 # IDEs
 .idea/
 .vscode/
