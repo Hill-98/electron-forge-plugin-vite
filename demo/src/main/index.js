@@ -1,10 +1,10 @@
 import { join } from 'node:path'
 import { BrowserWindow, app, protocol } from 'electron'
-import { SCHEME, init } from './dist/electron-protocol.js'
+import * as protocolHelper from './dist/electron-protocol-helper.mjs'
 
 protocol.registerSchemesAsPrivileged([
   {
-    scheme: SCHEME,
+    scheme: protocolHelper.SCHEME,
     privileges: {
       standard: true,
       secure: true,
@@ -13,7 +13,7 @@ protocol.registerSchemesAsPrivileged([
   },
 ])
 
-init()
+protocolHelper.init()
 
 app
   .whenReady()

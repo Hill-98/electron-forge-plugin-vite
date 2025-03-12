@@ -15,15 +15,18 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./client": {
       "types": "./types/vite-env.d.ts"
     },
     "./protocol": {
-      "types": "./types/electron-protocol.d.ts",
-      "import": "./dist/electron-protocol.js"
+      "types": "./types/electron-protocol-helper.d.ts",
+      "import": "./dist/electron-protocol-helper.mjs"
+    },
+    "./protocol-helper": {
+      "types": "./types/electron-protocol-helper.d.ts",
+      "import": "./dist/electron-protocol-helper.mjs"
     }
   },
   "main": "./dist/index.js",
@@ -39,7 +42,7 @@
   "license": "MIT",
   "scripts": {
     "prepublishOnly": "npm run check && npm run test && npm run build",
-    "build": "vite build",
+    "build": "vite build && vite build --mode electron",
     "check": "biome check && tsc --noEmit",
     "test": "node --experimental-strip-types --experimental-test-coverage --test",
     "prepare": "husky"

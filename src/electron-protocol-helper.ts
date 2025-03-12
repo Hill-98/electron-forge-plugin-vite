@@ -4,7 +4,7 @@ import { basename, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import electron from 'electron'
 import mime from 'mime-types'
-import type { CustomProtocolHandler } from '../types/electron-protocol.d.ts'
+import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
 
 const DEFAULT_MIME_TYPE = 'application/octet-stream'
 
@@ -20,7 +20,7 @@ const Paths = {
   renderer: resolve(electron.app.getAppPath(), RENDERER_OUT_DIR),
 }
 
-async function makeResponse(
+export async function makeResponse(
   body: BodyInit | null,
   init?: ResponseInit,
 ): Promise<Response> {
