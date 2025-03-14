@@ -15,7 +15,7 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "require": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./client": {
       "types": "./types/vite-env.d.ts"

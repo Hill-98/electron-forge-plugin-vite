@@ -1,4 +1,4 @@
-import { VitePlugin } from '../dist/index.js'
+import { VitePlugin } from '@hill-98/electron-forge-plugin-vite'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {
