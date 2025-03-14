@@ -30,7 +30,6 @@
     }
   },
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./types/index.d.ts",
   "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
   "repository": {
