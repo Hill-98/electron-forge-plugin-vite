@@ -23,8 +23,10 @@ export interface VitePluginConfigOptions {
   manualConfigs?: boolean
 }
 
-export function defineConfig(
-  configs: VitePluginConfigOptions['configs'],
-): VitePluginConfigOptions['configs']
+export declare function defineConfig<
+  T extends VitePluginConfigOptions['configs'],
+>(configs: T): T
 
-export class VitePlugin extends PluginBase<VitePluginConfigOptions> {}
+export declare class VitePlugin extends PluginBase<VitePluginConfigOptions> {
+  name: string
+}

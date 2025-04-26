@@ -14,6 +14,7 @@ import type {
   ViteInternalConfigOptions,
   VitePluginConfigOptions,
   ViteUserConfigs,
+  defineConfig as defineConfigType,
 } from '../types'
 import {
   getElectronChromeVersion,
@@ -44,9 +45,7 @@ const ENTRY = {
 
 const isDebug = inspector.url() !== undefined
 
-export function defineConfig(configs: VitePluginConfigOptions['configs']) {
-  return configs
-}
+export const defineConfig: typeof defineConfigType = (config) => config
 
 export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   name = 'VitePlugin'
