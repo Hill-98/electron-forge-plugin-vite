@@ -62,7 +62,6 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     super(config)
 
     this.config ??= {}
-    this.config.configs ??= {}
 
     this.getHooks = this.getHooks.bind(this)
   }
@@ -78,10 +77,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   async #buildAll(
     configs: Required<Parameters<typeof build>[0][]>,
   ): Promise<void> {
-    const { build } = await import('vite')
+    const { build } = await this.#importVite()
     for (const config of configs) {
       if (
-        isEmpty(config.build?.lib ? config.build?.lib.entry : {}) &&
+        isEmpty(config.build?.lib ? config.build?.lib.entry : undefined) &&
         isEmpty(config.build?.rollupOptions?.input)
       ) {
         continue
@@ -98,6 +97,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
       const viteWatcher = this.#viteWatchers.pop()
       await viteWatcher?.close()
     }
+  }
+
+  async #importVite(): Promise<typeof import('vite')> {
+    return import('vite')
   }
 
   async #mergeConfigs(
@@ -235,15 +238,11 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
       return this.#viteConfigs.get(mode) as ViteInternalConfigOptions
     }
 
-    let configs = this.config.configs
+    let configs = this.config.configs ?? {}
     let result: ViteInternalConfigOptions = {
       main: {},
       preload: {},
       renderer: {},
-    }
-
-    if (!configs) {
-      return result
     }
 
     if (typeof configs === 'function') {
@@ -305,7 +304,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
         : undefined
 
     if (this.#viteServer === null) {
-      const { createServer } = await import('vite')
+      const { createServer } = await this.#importVite()
       this.#viteServer = await createServer({ ...renderer, configFile: false })
     }
     await this.#viteServer.listen()
