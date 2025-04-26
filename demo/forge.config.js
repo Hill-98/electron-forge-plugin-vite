@@ -1,9 +1,11 @@
-import { VitePlugin } from '@hill-98/electron-forge-plugin-vite'
+import { VitePlugin, defineConfig } from '@hill-98/electron-forge-plugin-vite'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '**/resources/*.js',
+    },
     ignore(path) {
       return (
         path !== '' &&
@@ -11,7 +13,19 @@ const config = {
       )
     },
   },
-  plugins: [new VitePlugin({})],
+  plugins: [
+    new VitePlugin({
+      configs: defineConfig({
+        main: {
+          define: {
+            'import.meta.env.VITE_PRELOAD_SCRIPT': JSON.stringify(
+              '.vite/preload/index.cjs',
+            ),
+          },
+        },
+      }),
+    }),
+  ],
 }
 
 export default config

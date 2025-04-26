@@ -22,7 +22,7 @@ app
       width: 800,
       height: 600,
       webPreferences: {
-        preload: join(app.getAppPath(), '.vite/preload/index.cjs'),
+        preload: join(app.getAppPath(), import.meta.env.VITE_PRELOAD_SCRIPT),
       },
     })
     window.webContents.openDevTools()
