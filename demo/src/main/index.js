@@ -1,6 +1,6 @@
 import { join } from 'node:path'
+import * as protocolHelper from '@hill-98/electron-forge-plugin-vite/protocol-helper'
 import { BrowserWindow, app, protocol } from 'electron'
-import * as protocolHelper from './dist/electron-protocol-helper.mjs'
 
 protocol.registerSchemesAsPrivileged([
   {
