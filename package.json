@@ -53,12 +53,12 @@
     "@electron-forge/plugin-base": "^7.8.0",
     "@electron-forge/shared-types": "^7.8.0",
     "lodash.isempty": "^4.4.0",
-    "mime-types": "^2.1.35"
+    "mime-types": "^3.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/lodash.isempty": "^4.4.9",
-    "@types/mime-types": "^2.1.4",
+    "@types/mime-types": "^3.0.0",
     "@types/node": "latest",
     "electron": "34.0.0",
     "husky": "^9.1.6",
