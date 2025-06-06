@@ -21,6 +21,7 @@ export interface VitePluginConfigOptions {
     | ((mode: string) => ViteUserConfigs | Promise<ViteUserConfigs>)
   dumpConfigs?: boolean
   manualConfigs?: boolean
+  useRolldownVite?: boolean
 }
 
 export declare function defineConfig<

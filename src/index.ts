@@ -52,6 +52,8 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
 
   #pkgType = ''
 
+  #vite: typeof import('vite') | undefined
+
   #viteConfigs = new Map<string, ViteInternalConfigOptions>()
 
   #viteServer: ViteDevServer | null = null
@@ -100,7 +102,14 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   }
 
   async #importVite(): Promise<typeof import('vite')> {
-    return import('vite')
+    return this.#vite
+      ? this.#vite
+      : import(this.config.useRolldownVite ? 'rolldown-vite' : 'vite').then(
+          (vite) => {
+            this.#vite = vite
+            return vite
+          },
+        )
   }
 
   async #mergeConfigs(
