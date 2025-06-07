@@ -72,6 +72,9 @@
     "rolldown-vite": "^6.0.0"
   },
   "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    },
     "rolldown-vite": {
       "optional": true
     }
