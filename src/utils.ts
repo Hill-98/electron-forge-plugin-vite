@@ -70,7 +70,7 @@ export async function resolveHtmlEntry(
     } else if (basename(file) === 'index.html') {
       Reflect.set(
         result,
-        dirname(file).replace(/[\\\/]/g, '_'),
+        dirname(file).replace(/[\\/]/g, '_'),
         resolve(dir, file),
       )
     }

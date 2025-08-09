@@ -8,16 +8,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["package.json", "tsconfig.json"]
+    "includes": ["**", "!**/package.json", "!**/tsconfig.json"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "lineEnding": "lf"
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -31,7 +29,16 @@
       },
       "style": {
         "useEnumInitializers": "off",
-        "useNodeAssertStrict": "error"
+        "useNodeAssertStrict": "error",
+        "noParameterAssign": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
       },
       "suspicious": {
         "noExplicitAny": "off"

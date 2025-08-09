@@ -1,4 +1,4 @@
-import { VitePlugin, defineConfig } from '@hill-98/electron-forge-plugin-vite'
+import { defineConfig, VitePlugin } from '@hill-98/electron-forge-plugin-vite'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {

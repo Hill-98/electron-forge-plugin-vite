@@ -9,12 +9,12 @@ import type {
 } from '@electron-forge/shared-types'
 import isEmpty from 'lodash.isempty'
 import type { RollupWatcher } from 'rollup'
-import type { ViteDevServer, build } from 'vite'
+import type { build, ViteDevServer } from 'vite'
 import type {
+  defineConfig as defineConfigType,
   ViteInternalConfigOptions,
   VitePluginConfigOptions,
   ViteUserConfigs,
-  defineConfig as defineConfigType,
 } from '../types'
 import {
   getElectronChromeVersion,
