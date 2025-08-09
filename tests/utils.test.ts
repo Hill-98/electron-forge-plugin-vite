@@ -11,7 +11,7 @@ test('getElectronChromeVersion test', (t: TestContext) =>
   new Promise((resolve, reject) => {
     getElectronChromeVersion()
       .then((version) => {
-        t.assert.strictEqual(version, '132')
+        t.assert.strictEqual(version, '138')
         resolve()
       })
       .catch(reject)
@@ -21,7 +21,7 @@ test('getElectronNodeVersion test', (t: TestContext) =>
   new Promise((resolve, reject) => {
     getElectronNodeVersion()
       .then((version) => {
-        t.assert.strictEqual(version, '20')
+        t.assert.strictEqual(version, '22')
         resolve()
       })
       .catch(reject)
