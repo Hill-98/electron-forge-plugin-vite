@@ -1,6 +1,4 @@
-import { rmSync as rm } from 'node:fs'
 import { builtinModules } from 'node:module'
-import { join } from 'node:path'
 import { defineConfig } from 'vite'
 import pkg from './package.json'
 
@@ -14,11 +12,6 @@ const nodeBuiltinModules = [
   ...builtinModules.map((m) => `node:${m}`),
 ]
 
-process.on('exit', async () => {
-  rm(join(import.meta.dirname, 'dist/electron-protocol-helper.js'))
-  rm(join(import.meta.dirname, 'dist/index.mjs'))
-})
-
 export default defineConfig({
   build: {
     outDir: 'dist',
@@ -26,10 +19,7 @@ export default defineConfig({
     minify: false,
     lib: {
       entry: ['src/electron-protocol-helper.ts', 'src/index.ts'],
-      formats: ['cjs', 'es'],
-      fileName(format, entryName) {
-        return entryName.concat(format === 'es' ? '.mjs' : '.js')
-      },
+      formats: ['es'],
     },
     reportCompressedSize: false,
     rolldownOptions: {

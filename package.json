@@ -1,6 +1,7 @@
 {
   "name": "@hill-98/electron-forge-plugin-vite",
   "version": "1.5.2",
+  "type": "module",
   "description": "vite plugin for electron forge",
   "keywords": [
     "electron",
@@ -15,18 +16,14 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.js"
     },
     "./client": {
       "types": "./types/vite-env.d.ts"
     },
-    "./protocol": {
-      "types": "./types/electron-protocol-helper.d.ts",
-      "import": "./dist/electron-protocol-helper.mjs"
-    },
     "./protocol-helper": {
       "types": "./types/electron-protocol-helper.d.ts",
-      "import": "./dist/electron-protocol-helper.mjs"
+      "import": "./dist/electron-protocol-helper.js"
     }
   },
   "main": "./dist/index.js",
