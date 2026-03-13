@@ -80,7 +80,7 @@ export async function makeResponse(
 
 function protocolHandler(req: Request): Promise<Response> {
   const url = URL.parse(req.url) as URL
-  const pathname = url.pathname.substring(1)
+  const pathname = decodeURIComponent(url.pathname.substring(1))
   if (url.host === 'main' && typeof MAIN_PUBLIC_DIR === 'string') {
     const path = resolve(Paths.mainPublic, pathname)
     const unpackPath = resolve(Paths.mainPublicUnpack, pathname)
