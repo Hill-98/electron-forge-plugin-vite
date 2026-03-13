@@ -22,7 +22,7 @@ process.on('exit', async () => {
 export default defineConfig({
   build: {
     outDir: 'dist',
-    target: ['node16'],
+    target: ['node22'],
     minify: false,
     lib: {
       entry: ['src/electron-protocol-helper.ts', 'src/index.ts'],
@@ -32,7 +32,7 @@ export default defineConfig({
       },
     },
     reportCompressedSize: false,
-    rollupOptions: {
+    rolldownOptions: {
       external(id) {
         return (
           nodeBuiltinModules.includes(id) ||
