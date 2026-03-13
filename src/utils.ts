@@ -7,6 +7,23 @@ import electron from 'electron'
 
 const electronVersions = new Map<string, string>()
 
+export function absolutePath(path: string) {
+  return (path.startsWith('/') ? '/' : '').concat(
+    path
+      .split('/')
+      .filter((p) => p.trim() !== '' && p !== '.')
+      .reduce((result, p) => {
+        if (p === '..') {
+          result.pop()
+        } else {
+          result.push(p)
+        }
+        return result
+      }, [] as string[])
+      .join('/'),
+  )
+}
+
 export async function getElectronVersion(name: string): Promise<string> {
   const version = electronVersions.get(name)
   if (version) {

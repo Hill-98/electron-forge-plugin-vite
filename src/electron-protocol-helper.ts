@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import electron from 'electron'
 import mime from 'mime-types'
 import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
+import { absolutePath } from './utils.ts'
 
 const DEFAULT_MIME_TYPE = 'application/octet-stream'
 
@@ -80,7 +81,7 @@ export async function makeResponse(
 
 function protocolHandler(req: Request): Promise<Response> {
   const url = URL.parse(req.url) as URL
-  const pathname = decodeURIComponent(url.pathname.substring(1))
+  const pathname = absolutePath(decodeURIComponent(url.pathname.substring(1)))
   if (url.host === 'main' && typeof MAIN_PUBLIC_DIR === 'string') {
     const path = resolve(Paths.mainPublic, pathname)
     const unpackPath = resolve(Paths.mainPublicUnpack, pathname)
