@@ -40,7 +40,7 @@
     "prepublishOnly": "npm run check && npm run test && npm run build",
     "build": "vite build",
     "check": "biome check && tsc --noEmit",
-    "test": "node --experimental-strip-types --experimental-test-coverage --test",
+    "test": "node --experimental-test-coverage --test",
     "prepare": "husky"
   },
   "engines": {
