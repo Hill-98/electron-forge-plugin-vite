@@ -8,8 +8,10 @@ import type {
   ForgeHookMap,
 } from '@electron-forge/shared-types'
 import isEmpty from 'lodash.isempty'
-import type { RollupWatcher } from 'rollup'
-import type { build, ViteDevServer } from 'vite'
+import type { RolldownWatcher } from 'rolldown'
+import type { ViteDevServer } from 'vite'
+import { build, createServer } from 'vite'
+
 import type {
   defineConfig as defineConfigType,
   ViteInternalConfigOptions,
@@ -52,13 +54,11 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
 
   #pkgType = ''
 
-  #vite: typeof import('vite') | undefined
-
   #viteConfigs = new Map<string, ViteInternalConfigOptions>()
 
   #viteServer: ViteDevServer | null = null
 
-  #viteWatchers: RollupWatcher[] = []
+  #viteWatchers: RolldownWatcher[] = []
 
   constructor(config: VitePluginConfigOptions) {
     super(config)
@@ -79,11 +79,10 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   async #buildAll(
     configs: Required<Parameters<typeof build>[0][]>,
   ): Promise<void> {
-    const { build } = await this.#importVite()
     for (const config of configs) {
       if (
         isEmpty(config.build?.lib ? config.build?.lib.entry : undefined) &&
-        isEmpty(config.build?.rollupOptions?.input)
+        isEmpty(config.build?.rolldownOptions?.input)
       ) {
         continue
       }
@@ -99,17 +98,6 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
       const viteWatcher = this.#viteWatchers.pop()
       await viteWatcher?.close()
     }
-  }
-
-  async #importVite(): Promise<typeof import('vite')> {
-    return this.#vite
-      ? this.#vite
-      : import(this.config.useRolldownVite ? 'rolldown-vite' : 'vite').then(
-          (vite) => {
-            this.#vite = vite
-            return vite
-          },
-        )
   }
 
   async #mergeConfigs(
@@ -133,19 +121,19 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           minify: false,
           outDir: '.vite/main',
           reportCompressedSize: false,
-          rollupOptions: {
+          rolldownOptions: {
             external:
-              configs.main.build?.rollupOptions?.external === undefined ||
-              Array.isArray(configs.main.build.rollupOptions.external)
+              configs.main.build?.rolldownOptions?.external === undefined ||
+              Array.isArray(configs.main.build.rolldownOptions.external)
                 ? [
                     ...builtinModules,
                     ...builtinModules.map((v) => `node:${v}`),
                     'electron',
                     'electron/renderer',
-                    ...(configs.main.build?.rollupOptions?.external ?? []),
+                    ...(configs.main.build?.rolldownOptions?.external ?? []),
                   ]
-                : configs.main.build?.rollupOptions?.external,
-            ...configs.main.build?.rollupOptions,
+                : configs.main.build?.rolldownOptions?.external,
+            ...configs.main.build?.rolldownOptions,
           },
           sourcemap,
           ssr: true,
@@ -182,17 +170,17 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           minify: false,
           outDir: '.vite/preload',
           reportCompressedSize: false,
-          rollupOptions: {
+          rolldownOptions: {
             external:
-              configs.preload.build?.rollupOptions?.external === undefined ||
-              Array.isArray(configs.preload.build?.rollupOptions?.external)
+              configs.preload.build?.rolldownOptions?.external === undefined ||
+              Array.isArray(configs.preload.build?.rolldownOptions?.external)
                 ? [
                     'electron',
                     'electron/renderer',
-                    ...(configs.preload.build?.rollupOptions?.external ?? []),
+                    ...(configs.preload.build?.rolldownOptions?.external ?? []),
                   ]
-                : configs.preload.build?.rollupOptions?.external,
-            ...configs.preload.build?.rollupOptions,
+                : configs.preload.build?.rolldownOptions?.external,
+            ...configs.preload.build?.rolldownOptions,
           },
           sourcemap,
           ssr: true,
@@ -223,9 +211,9 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
           modulePreload: false,
           outDir: '../../.vite/renderer',
           reportCompressedSize: false,
-          rollupOptions: {
+          rolldownOptions: {
             input: await resolveHtmlEntry('src/renderer'),
-            ...configs.renderer.build?.rollupOptions,
+            ...configs.renderer.build?.rolldownOptions,
           },
           sourcemap,
           target: configs.renderer.build?.target ?? [
@@ -313,7 +301,6 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
         : undefined
 
     if (this.#viteServer === null) {
-      const { createServer } = await this.#importVite()
       this.#viteServer = await createServer({ ...renderer, configFile: false })
     }
     await this.#viteServer.listen()
