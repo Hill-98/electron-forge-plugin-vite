@@ -10,6 +10,7 @@ const electronVersions = new Map<string, string>()
 export function absolutePath(path: string) {
   return (path.startsWith('/') ? '/' : '').concat(
     path
+      .replaceAll('\\', '/')
       .split('/')
       .filter((p) => p.trim() !== '' && p !== '.')
       .reduce((result, p) => {
@@ -93,4 +94,8 @@ export async function resolveHtmlEntry(
     }
   }
   return result
+}
+
+export function resolvePathname(u: URL) {
+  return absolutePath(decodeURIComponent(u.pathname)).substring(1)
 }
