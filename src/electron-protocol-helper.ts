@@ -1,24 +1,61 @@
 import { existsSync as exists } from 'node:fs'
 import { stat } from 'node:fs/promises'
-import { basename, resolve } from 'node:path'
+import { parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import electron from 'electron'
-import mime from 'mime-types'
 import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
 import { resolvePathname } from './utils.ts'
 
-const DEFAULT_MIME_TYPE = 'application/octet-stream'
+export const DEFAULT_MIME_TYPE = 'application/octet-stream'
+export const SCHEME = 'app'
+
+const MIME_TYPES: Record<string, string> = {
+  'application/json': 'json',
+  'application/wasm': 'wasm',
+  'audio/mpeg': 'mp3',
+  'audio/ogg': 'oga ogg opus spx',
+  'audio/x-flac': 'flac',
+  'font/otf': 'otf',
+  'font/ttf': 'ttf',
+  'font/woff': 'woff',
+  'font/woff2': 'woff2',
+  'image/avif': 'avif',
+  'image/bmp': 'bmp',
+  'image/heic': 'heic',
+  'image/gif': 'gif',
+  'image/jpeg': 'jpg jpeg',
+  'image/png': 'png',
+  'image/svg+xml': 'svg',
+  'image/webp': 'webp',
+  'text/css': 'css',
+  'text/html': 'html htm',
+  'text/javascript': 'js mjs',
+  'text/plain': 'md txt',
+  'text/xml': 'xml',
+  'video/mp4': 'mp4',
+  'video/ogg': 'ogv',
+  'video/webm': 'webm',
+}
 
 const MAIN_PUBLIC_DIR = import.meta.env.VITE_MAIN_PUBLIC_DIR ?? 'public'
 const RENDERER_OUT_DIR = import.meta.env.VITE_RENDERER_OUT_DIR ?? 'renderer'
 
-const Paths = {
+const mimes = new Map()
+const paths = {
   mainPublic: resolve(electron.app.getAppPath(), MAIN_PUBLIC_DIR),
   mainPublicUnpack: resolve(
     electron.app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
     MAIN_PUBLIC_DIR,
   ),
   renderer: resolve(electron.app.getAppPath(), RENDERER_OUT_DIR),
+}
+
+export function addMimeType(type: string, extensions: string[]) {
+  for (const ext of extensions) {
+    if (ext.trim() !== '') {
+      mimes.set(ext.startsWith('.') ? ext : `.${ext}`, type)
+    }
+  }
 }
 
 export async function makeResponse(
@@ -36,7 +73,7 @@ export async function makeResponse(
         return makeResponse('Forbidden', { status: 403 })
       }
       const res = await electron.net.fetch(body)
-      const mimeType = mime.lookup(basename(path))
+      const mimeType = mimes.get(parse(path).ext)
       return new Response(res.body, {
         ...init,
         headers: {
@@ -83,8 +120,8 @@ function protocolHandler(req: Request): Promise<Response> {
   const url = URL.parse(req.url) as URL
   const pathname = resolvePathname(url)
   if (url.host === 'main' && typeof MAIN_PUBLIC_DIR === 'string') {
-    const path = resolve(Paths.mainPublic, pathname)
-    const unpackPath = resolve(Paths.mainPublicUnpack, pathname)
+    const path = resolve(paths.mainPublic, pathname)
+    const unpackPath = resolve(paths.mainPublicUnpack, pathname)
     return exists(unpackPath)
       ? makeResponse(pathToFileURL(unpackPath).toString())
       : makeResponse(pathToFileURL(path).toString())
@@ -92,14 +129,12 @@ function protocolHandler(req: Request): Promise<Response> {
   if (url.host === 'renderer') {
     return makeResponse(
       pathToFileURL(
-        resolve(Paths.renderer, pathname === '' ? 'index.html' : pathname),
+        resolve(paths.renderer, pathname === '' ? 'index.html' : pathname),
       ).toString(),
     )
   }
   return makeResponse('Not found', { status: 404 })
 }
-
-export const SCHEME = 'app'
 
 export function init(customHandler: CustomProtocolHandler = protocolHandler) {
   if (electron.app.isReady()) {
@@ -111,4 +146,12 @@ export function init(customHandler: CustomProtocolHandler = protocolHandler) {
   } else {
     electron.app.whenReady().then(init.bind(null, customHandler))
   }
+}
+
+for (const type in MIME_TYPES) {
+  if (!type.includes('/')) {
+    continue
+  }
+  const extensions = MIME_TYPES[type].split(' ')
+  addMimeType(type, extensions)
 }
