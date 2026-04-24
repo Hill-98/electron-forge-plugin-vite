@@ -5,6 +5,7 @@ import {
   getElectronChromeVersion,
   getElectronNodeVersion,
   getElectronVersion,
+  isEmptyInput,
   resolveHtmlEntry,
   resolvePathname,
 } from '../src/utils.ts'
@@ -49,6 +50,18 @@ test('getElectronVersions test', (t: TestContext) =>
       resolve()
     })
   }))
+
+test('isEmptyInput test', (t: TestContext) => {
+  t.assert.strictEqual(isEmptyInput(null), true)
+  t.assert.strictEqual(isEmptyInput(undefined), true)
+  t.assert.strictEqual(isEmptyInput(''), true)
+  t.assert.strictEqual(isEmptyInput('   '), true)
+  t.assert.strictEqual(isEmptyInput('x'), false)
+  t.assert.strictEqual(isEmptyInput([]), true)
+  t.assert.strictEqual(isEmptyInput(['1']), false)
+  t.assert.strictEqual(isEmptyInput({}), true)
+  t.assert.strictEqual(isEmptyInput({ a: '1' }), false)
+})
 
 test('resolveHtmlEntry test', (t: TestContext) =>
   new Promise((resolve) => {

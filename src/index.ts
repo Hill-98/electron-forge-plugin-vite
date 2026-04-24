@@ -7,7 +7,6 @@ import type {
   ElectronProcess,
   ForgeHookMap,
 } from '@electron-forge/shared-types'
-import isEmpty from 'lodash.isempty'
 import type { RolldownWatcher } from 'rolldown'
 import type { ViteDevServer } from 'vite'
 import { build, createServer } from 'vite'
@@ -21,6 +20,7 @@ import type {
 import {
   getElectronChromeVersion,
   getElectronNodeVersion,
+  isEmptyInput,
   resolveHtmlEntry,
 } from './utils.ts'
 
@@ -81,8 +81,8 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
   ): Promise<void> {
     for (const config of configs) {
       if (
-        isEmpty(config.build?.lib ? config.build?.lib.entry : undefined) &&
-        isEmpty(config.build?.rolldownOptions?.input)
+        isEmptyInput(config.build?.lib ? config.build?.lib.entry : undefined) &&
+        isEmptyInput(config.build?.rolldownOptions?.input)
       ) {
         continue
       }

@@ -74,6 +74,16 @@ export async function getElectronNodeVersion(): Promise<string> {
   return (await getElectronVersion('node')).split('.')[0]
 }
 
+export function isEmptyInput(value: any): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === 'string' && value.trim() === '') ||
+    (Array.isArray(value) && value.length === 0) ||
+    (typeof value === 'object' && Object.keys(value).length === 0)
+  )
+}
+
 export async function resolveHtmlEntry(
   dir: string,
 ): Promise<Record<string, string>> {

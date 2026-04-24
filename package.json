@@ -49,12 +49,10 @@
   "dependencies": {
     "@electron-forge/plugin-base": "^7.11.0",
     "@electron-forge/shared-types": "^7.11.0",
-    "lodash.isempty": "^4.4.0",
     "mime-types": "^3.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
-    "@types/lodash.isempty": "^4.4.9",
     "@types/mime-types": "^3.0.0",
     "@types/node": "latest",
     "electron": "41.0.2",
