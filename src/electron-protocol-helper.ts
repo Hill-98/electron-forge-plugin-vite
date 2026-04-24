@@ -1,5 +1,5 @@
 import { existsSync as exists } from 'node:fs'
-import { stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import electron from 'electron'
@@ -72,14 +72,14 @@ export async function makeResponse(
       if (!state.isFile()) {
         return makeResponse('Forbidden', { status: 403 })
       }
-      const res = await electron.net.fetch(body)
+      const data = await readFile(path)
       const mimeType = mimes.get(parse(path).ext)
-      return new Response(res.body, {
+      return new Response(data, {
         ...init,
         headers: {
           'Cache-Control': 'no-store',
           'Content-Type': mimeType === false ? DEFAULT_MIME_TYPE : mimeType,
-          'Content-Length': state.size.toString(),
+          'Content-Length': data.length.toString(),
           Date: new Date().toUTCString(),
           ...init?.headers,
         },
