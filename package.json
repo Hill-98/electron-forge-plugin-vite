@@ -16,17 +16,17 @@
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.mjs"
     },
     "./client": {
       "types": "./types/vite-env.d.ts"
     },
     "./protocol-helper": {
       "types": "./types/electron-protocol-helper.d.ts",
-      "import": "./dist/electron-protocol-helper.js"
+      "import": "./dist/electron-protocol-helper.mjs"
     }
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
   "types": "./types/index.d.ts",
   "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
   "repository": {
@@ -38,7 +38,7 @@
   "license": "MIT",
   "scripts": {
     "prepublishOnly": "npm run check && npm run test && npm run build",
-    "build": "vite build",
+    "build": "tsdown",
     "check": "biome check && tsc --noEmit",
     "test": "node --experimental-test-coverage --test",
     "prepare": "husky"
@@ -55,8 +55,8 @@
     "@types/node": "latest",
     "electron": "41.0.2",
     "husky": "^9.1.6",
-    "typescript": "~5.9.2",
-    "vite": "^8.0.0"
+    "tsdown": "^0.22.14",
+    "typescript": "~7.0.2"
   },
   "peerDependencies": {
     "@electron-forge/cli": "^7.11.0",

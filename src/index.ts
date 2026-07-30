@@ -16,7 +16,7 @@ import type {
   ViteInternalConfigOptions,
   VitePluginConfigOptions,
   ViteUserConfigs,
-} from '../types'
+} from '../types/index.d.ts'
 import {
   getElectronChromeVersion,
   getElectronNodeVersion,

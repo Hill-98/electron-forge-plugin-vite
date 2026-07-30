@@ -152,6 +152,6 @@ for (const type in MIME_TYPES) {
   if (!type.includes('/')) {
     continue
   }
-  const extensions = MIME_TYPES[type].split(' ')
+  const extensions = (MIME_TYPES[type] as string).split(' ')
   addMimeType(type, extensions)
 }

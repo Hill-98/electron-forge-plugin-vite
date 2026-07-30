@@ -67,11 +67,11 @@ export async function getElectronVersion(name: string): Promise<string> {
 }
 
 export async function getElectronChromeVersion(): Promise<string> {
-  return (await getElectronVersion('chrome')).split('.')[0]
+  return (await getElectronVersion('chrome')).split('.')[0] as string
 }
 
 export async function getElectronNodeVersion(): Promise<string> {
-  return (await getElectronVersion('node')).split('.')[0]
+  return (await getElectronVersion('node')).split('.')[0] as string
 }
 
 export function isEmptyInput(value: any): boolean {
