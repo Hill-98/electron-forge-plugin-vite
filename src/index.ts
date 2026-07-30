@@ -106,7 +106,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     mode: string,
     configs: VitePluginConfigs,
   ): Promise<VitePluginConfigs> {
-    const sourcemap = isDebug && mode === 'development' ? 'inline' : false
+    const isDev = mode === 'development'
+    const attachDebugInfo = isDev ? 'full' : 'none'
+    const sourcemap = isDebug && isDev ? 'inline' : false
 
     return {
       main: {
@@ -124,6 +126,10 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           outDir: '.vite/main',
           reportCompressedSize: false,
           rolldownOptions: {
+            experimental: {
+              attachDebugInfo,
+              ...configs.main.build?.rolldownOptions?.experimental,
+            },
             external:
               configs.main.build?.rolldownOptions?.external === undefined ||
               Array.isArray(configs.main.build.rolldownOptions.external)
@@ -135,6 +141,10 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
                     ...(configs.main.build?.rolldownOptions?.external ?? []),
                   ]
                 : configs.main.build?.rolldownOptions?.external,
+            output: {
+              comments: isDev,
+              ...configs.main.build?.rolldownOptions?.output,
+            },
             ...configs.main.build?.rolldownOptions,
           },
           sourcemap,
@@ -173,6 +183,10 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           outDir: '.vite/preload',
           reportCompressedSize: false,
           rolldownOptions: {
+            experimental: {
+              attachDebugInfo,
+              ...configs.preload.build?.rolldownOptions?.experimental,
+            },
             external:
               configs.preload.build?.rolldownOptions?.external === undefined ||
               Array.isArray(configs.preload.build?.rolldownOptions?.external)
@@ -182,6 +196,10 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
                     ...(configs.preload.build?.rolldownOptions?.external ?? []),
                   ]
                 : configs.preload.build?.rolldownOptions?.external,
+            output: {
+              comments: isDev,
+              ...configs.preload.build?.rolldownOptions?.output,
+            },
             ...configs.preload.build?.rolldownOptions,
           },
           sourcemap,
@@ -214,7 +232,15 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           outDir: '../../.vite/renderer',
           reportCompressedSize: false,
           rolldownOptions: {
+            experimental: {
+              attachDebugInfo,
+              ...configs.renderer.build?.rolldownOptions?.experimental,
+            },
             input: await resolveHtmlEntry('src/renderer'),
+            output: {
+              comments: isDev,
+              ...configs.renderer.build?.rolldownOptions?.output,
+            },
             ...configs.renderer.build?.rolldownOptions,
           },
           sourcemap,
