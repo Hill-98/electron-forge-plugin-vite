@@ -119,7 +119,7 @@ export async function makeResponse(
 function protocolHandler(req: Request): Promise<Response> {
   const url = URL.parse(req.url) as URL
   const pathname = resolvePathname(url)
-  if (url.host === 'main' && typeof MAIN_PUBLIC_DIR === 'string') {
+  if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
     const path = resolve(paths.mainPublic, pathname)
     const unpackPath = resolve(paths.mainPublicUnpack, pathname)
     return exists(unpackPath)
