@@ -149,9 +149,7 @@ export function init(customHandler: CustomProtocolHandler = protocolHandler) {
 }
 
 for (const type in MIME_TYPES) {
-  if (!type.includes('/')) {
-    continue
+  if (type.includes('/')) {
+    addMimeType(type, (MIME_TYPES[type] as string).split(' '))
   }
-  const extensions = (MIME_TYPES[type] as string).split(' ')
-  addMimeType(type, extensions)
 }
