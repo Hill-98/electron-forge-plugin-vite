@@ -27,7 +27,7 @@ test('getElectronChromeVersion test', (t: TestContext) =>
   new Promise((resolve, reject) => {
     getElectronChromeVersion()
       .then((version) => {
-        t.assert.strictEqual(version, '146')
+        t.assert.strictEqual(version, '150')
         resolve()
       })
       .catch(reject)
