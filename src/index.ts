@@ -12,10 +12,10 @@ import type { ViteDevServer } from 'vite'
 import { build, createServer } from 'vite'
 
 import type {
-  defineConfig as defineConfigType,
-  ViteInternalConfigOptions,
-  VitePluginConfigOptions,
-  ViteUserConfigs,
+  defineConfigs as defineConfigsType,
+  VitePluginConfigs,
+  VitePluginOptions,
+  VitePluginUserConfigs,
 } from '../types/index.d.ts'
 import {
   getElectronChromeVersion,
@@ -47,20 +47,22 @@ const ENTRY = {
 
 const isDebug = inspector.url() !== undefined
 
-export const defineConfig: typeof defineConfigType = (config) => config
+export const defineConfig: typeof defineConfigsType = (config) => config
 
-export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
+export const defineConfigs: typeof defineConfigsType = (configs) => configs
+
+export class VitePlugin extends PluginBase<VitePluginOptions> {
   name = 'VitePlugin'
 
   #pkgType = ''
 
-  #viteConfigs = new Map<string, ViteInternalConfigOptions>()
+  #viteConfigs = new Map<string, VitePluginConfigs>()
 
   #viteServer: ViteDevServer | null = null
 
   #viteWatchers: RolldownWatcher[] = []
 
-  constructor(config: VitePluginConfigOptions) {
+  constructor(config: VitePluginOptions) {
     super(config)
 
     this.config ??= {}
@@ -102,8 +104,8 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
 
   async #mergeConfigs(
     mode: string,
-    configs: ViteInternalConfigOptions,
-  ): Promise<ViteInternalConfigOptions> {
+    configs: VitePluginConfigs,
+  ): Promise<VitePluginConfigs> {
     const sourcemap = isDebug && mode === 'development' ? 'inline' : false
 
     return {
@@ -230,13 +232,13 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
     }
   }
 
-  async #resolveConfigs(mode: string): Promise<ViteInternalConfigOptions> {
+  async #resolveConfigs(mode: string): Promise<VitePluginConfigs> {
     if (this.#viteConfigs.has(mode)) {
-      return this.#viteConfigs.get(mode) as ViteInternalConfigOptions
+      return this.#viteConfigs.get(mode) as VitePluginConfigs
     }
 
     let configs = this.config.configs ?? {}
-    let result: ViteInternalConfigOptions = {
+    let result: VitePluginConfigs = {
       main: {},
       preload: {},
       renderer: {},
@@ -246,7 +248,7 @@ export class VitePlugin extends PluginBase<VitePluginConfigOptions> {
       configs = await configs(mode)
     }
 
-    const keys = Object.keys(result) as (keyof ViteUserConfigs)[]
+    const keys = Object.keys(result) as (keyof VitePluginUserConfigs)[]
     for (const key of keys) {
       if (typeof configs[key] === 'function') {
         result[key] = await configs[key](mode)

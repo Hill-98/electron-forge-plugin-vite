@@ -1,4 +1,4 @@
-import { defineConfig, VitePlugin } from '@hill-98/electron-forge-plugin-vite'
+import { defineConfigs, VitePlugin } from '@hill-98/electron-forge-plugin-vite'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {
@@ -15,7 +15,7 @@ const config = {
   },
   plugins: [
     new VitePlugin({
-      configs: defineConfig({
+      configs: defineConfigs({
         main: {
           define: {
             'import.meta.env.VITE_PRELOAD_SCRIPT': JSON.stringify(

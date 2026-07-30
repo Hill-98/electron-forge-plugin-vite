@@ -1,32 +1,37 @@
 import { PluginBase } from '@electron-forge/plugin-base'
 import type { UserConfig as ViteConfig } from 'vite'
 
-export type ViteUserConfig =
-  | ViteConfig
-  | ((mode: string) => ViteConfig | Promise<ViteConfig>)
+export type ConfigObjOrFunc<T> = T | ((mode: string) => T | Promise<T>)
 
-export interface ViteInternalConfigOptions {
+export type VitePluginUserConfig = ConfigObjOrFunc<ViteConfig>
+
+export interface VitePluginConfigs {
   main: ViteConfig
   preload: ViteConfig
   renderer: ViteConfig
 }
 
-export type ViteUserConfigs = Partial<
-  Record<keyof ViteInternalConfigOptions, ViteUserConfig>
+export type VitePluginUserConfigs = Partial<
+  Record<keyof VitePluginConfigs, VitePluginUserConfig>
 >
 
-export interface VitePluginConfigOptions {
-  configs?:
-    | ViteUserConfigs
-    | ((mode: string) => ViteUserConfigs | Promise<ViteUserConfigs>)
+export interface VitePluginOptions {
+  configs?: ConfigObjOrFunc<VitePluginUserConfigs>
   dumpConfigs?: boolean
   manualConfigs?: boolean
 }
 
+/**
+ * @deprecated use `defineConfigs`
+ */
 export declare function defineConfig<
-  T extends VitePluginConfigOptions['configs'],
+  T extends ConfigObjOrFunc<VitePluginUserConfigs>,
 >(configs: T): T
 
-export declare class VitePlugin extends PluginBase<VitePluginConfigOptions> {
+export declare function defineConfigs<
+  T extends ConfigObjOrFunc<VitePluginUserConfigs>,
+>(configs: T): T
+
+export declare class VitePlugin extends PluginBase<VitePluginOptions> {
   name: string
 }
