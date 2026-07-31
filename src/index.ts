@@ -90,7 +90,11 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       ) {
         continue
       }
-      const result = await build({ ...config, configFile: false })
+      const result = await build({
+        ...config,
+        clearScreen: false,
+        configFile: false,
+      })
       if ('close' in result) {
         this.#viteWatchers.push(result)
       }
@@ -308,7 +312,11 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         : undefined
 
     if (this.#viteServer === null) {
-      this.#viteServer = await createServer({ ...renderer, configFile: false })
+      this.#viteServer = await createServer({
+        ...renderer,
+        clearScreen: false,
+        configFile: false,
+      })
     }
     await this.#viteServer.listen()
     const address = this.#viteServer.httpServer?.address()
