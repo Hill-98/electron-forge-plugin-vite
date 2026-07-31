@@ -23,33 +23,22 @@ test('absolutePath test', (t: TestContext) => {
   t.assert.strictEqual(absolutePath('../te\\st/..\\/te/.\\st'), 'te/te/st')
 })
 
-test('getElectronChromeVersion test', (t: TestContext) =>
-  new Promise((resolve, reject) => {
-    getElectronChromeVersion()
-      .then((version) => {
-        t.assert.strictEqual(version, '150')
-        resolve()
-      })
-      .catch(reject)
-  }))
+test('getElectronChromeVersion test', async (t: TestContext) => {
+  t.assert.strictEqual(await getElectronChromeVersion(), '150')
+})
 
-test('getElectronNodeVersion test', (t: TestContext) =>
-  new Promise((resolve, reject) => {
-    getElectronNodeVersion()
-      .then((version) => {
-        t.assert.strictEqual(version, '24')
-        resolve()
-      })
-      .catch(reject)
-  }))
+test('getElectronNodeVersion test', async (t: TestContext) => {
+  t.assert.strictEqual(await getElectronNodeVersion(), '24')
+})
 
-test('getElectronVersions test', (t: TestContext) =>
-  new Promise((resolve) => {
-    getElectronVersion('1').catch((err) => {
-      t.assert.strictEqual(err.message, 'Error: electron version 1 not found')
-      resolve()
-    })
-  }))
+test('getElectronVersions test', async (t: TestContext) => {
+  try {
+    await getElectronVersion('1')
+  } catch (err: unknown) {
+    t.assert.ok(err instanceof Error)
+    t.assert.strictEqual(err.message, 'Error: electron version 1 not found')
+  }
+})
 
 test('isEmptyInput test', (t: TestContext) => {
   t.assert.strictEqual(isEmptyInput(null), true)
