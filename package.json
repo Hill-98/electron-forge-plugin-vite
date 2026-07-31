@@ -1,6 +1,6 @@
 {
   "name": "@hill-98/electron-forge-plugin-vite",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "type": "module",
   "description": "vite plugin for electron forge",
   "keywords": [
@@ -9,6 +9,14 @@
     "plugin",
     "vite"
   ],
+  "author": "Zhong Lufan <lufanzhong@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
+  "bugs": "https://github.com/Hill-98/electron-forge-plugin-vite/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hill-98/electron-forge-plugin-vite.git"
+  },
   "files": [
     "./dist",
     "./types"
@@ -28,14 +36,6 @@
   },
   "main": "./dist/index.mjs",
   "types": "./types/index.d.ts",
-  "homepage": "https://github.com/Hill-98/electron-forge-plugin-vite",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Hill-98/electron-forge-plugin-vite.git"
-  },
-  "bugs": "https://github.com/Hill-98/electron-forge-plugin-vite/issues",
-  "author": "Zhong Lufan <lufanzhong@gmail.com>",
-  "license": "MIT",
   "scripts": {
     "prepublishOnly": "npm run check && npm run test && npm run build",
     "build": "tsdown",
