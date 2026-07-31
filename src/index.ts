@@ -21,6 +21,8 @@ import {
   getElectronChromeVersion,
   getElectronNodeVersion,
   isEmptyInput,
+  MERGE_ARRAY_SYMBOL,
+  mergeDefaults,
   resolveHtmlEntry,
 } from './utils.ts'
 
@@ -115,45 +117,37 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         envPrefix: ['MAIN_VITE_', 'VITE_'],
         publicDir: 'resources',
         ...configs.main,
-        build: {
-          copyPublicDir: false,
-          minify: false,
-          outDir: '.vite/main',
-          reportCompressedSize: false,
-          sourcemap,
-          ssr: true,
-          ...configs.main.build,
-          lib: {
-            entry: ENTRY.main.find((e) => exists(e)) ?? [],
-            formats: this.#pkgType === 'module' ? ['es'] : ['cjs'],
-            ...configs.main.build?.lib,
-          },
-          rolldownOptions: {
-            experimental: {
-              attachDebugInfo,
-              ...configs.main.build?.rolldownOptions?.experimental,
+        build: mergeDefaults(
+          {
+            copyPublicDir: false,
+            lib: {
+              entry: ENTRY.main.find((e) => exists(e)) ?? [],
+              formats: this.#pkgType === 'module' ? ['es'] : ['cjs'],
             },
-            external:
-              configs.main.build?.rolldownOptions?.external === undefined ||
-              Array.isArray(configs.main.build.rolldownOptions.external)
-                ? [
-                    ...builtinModules,
-                    ...builtinModules.map((v) => `node:${v}`),
-                    'electron',
-                    'electron/renderer',
-                    ...(configs.main.build?.rolldownOptions?.external ?? []),
-                  ]
-                : configs.main.build?.rolldownOptions?.external,
-            output: {
-              comments: isDev,
-              ...configs.main.build?.rolldownOptions?.output,
+            minify: false,
+            outDir: '.vite/main',
+            reportCompressedSize: false,
+            rolldownOptions: {
+              experimental: {
+                attachDebugInfo,
+              },
+              external: [
+                MERGE_ARRAY_SYMBOL,
+                ...builtinModules,
+                ...builtinModules.map((v) => `node:${v}`),
+                'electron',
+                'electron/renderer',
+              ],
+              output: {
+                comments: isDev,
+              },
             },
-            ...configs.main.build?.rolldownOptions,
+            sourcemap,
+            ssr: true,
+            target: [`node${await getElectronNodeVersion()}`],
           },
-          target: configs.main.build?.target ?? [
-            `node${await getElectronNodeVersion()}`,
-          ],
-        },
+          configs.main.build,
+        ),
         define: {
           ...configs.main.define,
           'import.meta.env.VITE_BUILD_TARGET': '"main"',
@@ -172,43 +166,31 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         envPrefix: ['PRELOAD_VITE_', 'VITE_'],
         publicDir: 'resources',
         ...configs.preload,
-        build: {
-          copyPublicDir: false,
-          minify: false,
-          outDir: '.vite/preload',
-          reportCompressedSize: false,
-          sourcemap,
-          ssr: true,
-          ...configs.preload.build,
-          lib: {
-            entry: ENTRY.preload.find((e) => exists(e)) ?? [],
-            formats: ['cjs'],
-            ...configs.preload.build?.lib,
-          },
-          rolldownOptions: {
-            ...configs.preload.build?.rolldownOptions,
-            experimental: {
-              attachDebugInfo,
-              ...configs.preload.build?.rolldownOptions?.experimental,
+        build: mergeDefaults(
+          {
+            copyPublicDir: false,
+            minify: false,
+            outDir: '.vite/preload',
+            reportCompressedSize: false,
+            sourcemap,
+            lib: {
+              entry: ENTRY.preload.find((e) => exists(e)) ?? [],
+              formats: ['cjs'],
             },
-            external:
-              configs.preload.build?.rolldownOptions?.external === undefined ||
-              Array.isArray(configs.preload.build?.rolldownOptions?.external)
-                ? [
-                    'electron',
-                    'electron/renderer',
-                    ...(configs.preload.build?.rolldownOptions?.external ?? []),
-                  ]
-                : configs.preload.build?.rolldownOptions?.external,
-            output: {
-              comments: isDev,
-              ...configs.preload.build?.rolldownOptions?.output,
+            rolldownOptions: {
+              experimental: {
+                attachDebugInfo,
+              },
+              external: [MERGE_ARRAY_SYMBOL, 'electron', 'electron/renderer'],
+              output: {
+                comments: isDev,
+              },
             },
+            ssr: true,
+            target: [`chrome${await getElectronChromeVersion()}`],
           },
-          target: configs.preload.build?.target ?? [
-            `chrome${await getElectronChromeVersion()}`,
-          ],
-        },
+          configs.preload.build,
+        ),
         define: {
           ...configs.preload.define,
           'import.meta.env.VITE_BUILD_TARGET': '"preload"',
@@ -224,31 +206,28 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         root: 'src/renderer',
         envPrefix: ['RENDERER_VITE_', 'VITE_'],
         ...configs.renderer,
-        build: {
-          assetsInlineLimit: 0,
-          emptyOutDir: true,
-          minify: false,
-          modulePreload: false,
-          outDir: '../../.vite/renderer',
-          reportCompressedSize: false,
-          sourcemap,
-          ...configs.renderer.build,
-          rolldownOptions: {
-            input: await resolveHtmlEntry('src/renderer'),
-            ...configs.renderer.build?.rolldownOptions,
-            experimental: {
-              attachDebugInfo,
-              ...configs.renderer.build?.rolldownOptions?.experimental,
+        build: mergeDefaults(
+          {
+            assetsInlineLimit: 0,
+            emptyOutDir: true,
+            minify: false,
+            modulePreload: false,
+            outDir: '../../.vite/renderer',
+            reportCompressedSize: false,
+            rolldownOptions: {
+              input: await resolveHtmlEntry('src/renderer'),
+              experimental: {
+                attachDebugInfo,
+              },
+              output: {
+                comments: isDev,
+              },
             },
-            output: {
-              comments: isDev,
-              ...configs.renderer.build?.rolldownOptions?.output,
-            },
+            sourcemap,
+            target: [`chrome${await getElectronChromeVersion()}`],
           },
-          target: configs.renderer.build?.target ?? [
-            `chrome${await getElectronChromeVersion()}`,
-          ],
-        },
+          configs.renderer.build,
+        ),
         define: {
           ...configs.renderer.define,
           'import.meta.env.VITE_BUILD_TARGET': '"renderer"',

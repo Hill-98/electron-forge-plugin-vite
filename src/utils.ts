@@ -7,6 +7,8 @@ import electron from 'electron'
 
 const electronVersions = new Map<string, string>()
 
+export const MERGE_ARRAY_SYMBOL: any = Symbol()
+
 export function absolutePath(path: string) {
   return (path.startsWith('/') ? '/' : '').concat(
     path
@@ -84,6 +86,35 @@ export function isEmptyInput(value: any): boolean {
   )
 }
 
+export function isObject(obj: any): obj is object {
+  return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
+}
+
+export function mergeDefaults<T>(defaults: T, target?: T): T {
+  if (target === undefined) {
+    return trimMergeArray(defaults)
+  }
+  if (!isObject(defaults) || !isObject(target)) {
+    return target
+  }
+  for (const key of Reflect.ownKeys(defaults)) {
+    const dValue = Reflect.get(defaults, key)
+    const tValue = Reflect.get(target, key)
+    if (!Reflect.has(target, key)) {
+      Reflect.set(target, key, trimMergeArray(dValue))
+    } else if (isObject(tValue)) {
+      mergeDefaults<any>(dValue, tValue)
+    } else if (
+      Array.isArray(dValue) &&
+      Array.isArray(tValue) &&
+      dValue.includes(MERGE_ARRAY_SYMBOL)
+    ) {
+      Reflect.set(target, key, trimMergeArray([...dValue, ...tValue]))
+    }
+  }
+  return target
+}
+
 export async function resolveHtmlEntry(
   dir: string,
 ): Promise<Record<string, string>> {
@@ -108,4 +139,19 @@ export async function resolveHtmlEntry(
 
 export function resolvePathname(u: URL) {
   return absolutePath(decodeURIComponent(u.pathname)).substring(1)
+}
+
+export function trimMergeArray<T>(obj: T): T {
+  if (Array.isArray(obj) && obj.includes(MERGE_ARRAY_SYMBOL)) {
+    return obj.filter((v) => v !== MERGE_ARRAY_SYMBOL) as T
+  }
+  if (isObject(obj)) {
+    for (const key of Reflect.ownKeys(obj)) {
+      const value = Reflect.get(obj, key)
+      if (typeof value === 'object' && value !== null) {
+        Reflect.set(obj, key, trimMergeArray(value))
+      }
+    }
+  }
+  return obj
 }
