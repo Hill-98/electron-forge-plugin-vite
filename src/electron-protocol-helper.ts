@@ -6,54 +6,57 @@ import { app, protocol } from 'electron'
 import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
 import { resolvePathname } from './utils.ts'
 
+interface Paths {
+  mainPublic: string
+  mainPublicUnpack: string
+  renderer: string
+}
+
 export const DEFAULT_MIME_TYPE = 'application/octet-stream'
 export const SCHEME = 'app'
-
-const MIME_TYPES: Record<string, string> = {
-  'application/json': 'json',
-  'application/wasm': 'wasm',
-  'audio/mpeg': 'mp3',
-  'audio/ogg': 'oga ogg opus spx',
-  'audio/x-flac': 'flac',
-  'font/otf': 'otf',
-  'font/ttf': 'ttf',
-  'font/woff': 'woff',
-  'font/woff2': 'woff2',
-  'image/avif': 'avif',
-  'image/bmp': 'bmp',
-  'image/heic': 'heic',
-  'image/gif': 'gif',
-  'image/jpeg': 'jpg jpeg',
-  'image/png': 'png',
-  'image/svg+xml': 'svg',
-  'image/webp': 'webp',
-  'text/css': 'css',
-  'text/html': 'html htm',
-  'text/javascript': 'js mjs',
-  'text/plain': 'md txt',
-  'text/xml': 'xml',
-  'video/mp4': 'mp4',
-  'video/ogg': 'ogv',
-  'video/webm': 'webm',
-}
 
 const MAIN_PUBLIC_DIR = import.meta.env.VITE_MAIN_PUBLIC_DIR ?? 'public'
 const RENDERER_OUT_DIR = import.meta.env.VITE_RENDERER_OUT_DIR ?? 'renderer'
 
 const mimes = new Map()
-const paths = {
-  mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
-  mainPublicUnpack: resolve(
-    app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
-    MAIN_PUBLIC_DIR,
-  ),
-  renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
-}
 
-export function addMimeType(type: string, extensions: string[]) {
-  for (const ext of extensions) {
-    if (ext.trim() !== '') {
-      mimes.set(ext.startsWith('.') ? ext : `.${ext}`, type)
+function initMimeTypes() {
+  const MIME_TYPES: Record<string, string> = {
+    'application/json': 'json',
+    'application/wasm': 'wasm',
+    'audio/mpeg': 'mp3',
+    'audio/ogg': 'oga ogg opus spx',
+    'audio/x-flac': 'flac',
+    'font/otf': 'otf',
+    'font/ttf': 'ttf',
+    'font/woff': 'woff',
+    'font/woff2': 'woff2',
+    'image/avif': 'avif',
+    'image/bmp': 'bmp',
+    'image/heic': 'heic',
+    'image/gif': 'gif',
+    'image/jpeg': 'jpg jpeg',
+    'image/png': 'png',
+    'image/svg+xml': 'svg',
+    'image/webp': 'webp',
+    'text/css': 'css',
+    'text/html': 'html htm',
+    'text/javascript': 'js mjs',
+    'text/plain': 'md txt',
+    'text/xml': 'xml',
+    'video/mp4': 'mp4',
+    'video/ogg': 'ogv',
+    'video/webm': 'webm',
+  }
+
+  for (const type in MIME_TYPES) {
+    if (type.includes('/')) {
+      const extensions = (MIME_TYPES[type] as string).split(' ')
+      for (const ext of extensions) {
+        if (ext.trim() !== '') {
+          mimes.set(`.${ext}`, type)
+        }
+      }
     }
   }
 }
@@ -78,7 +81,7 @@ export async function makeResponse(
         ...init,
         headers: {
           'Cache-Control': 'no-store',
-          'Content-Type': mimeType === false ? DEFAULT_MIME_TYPE : mimeType,
+          'Content-Type': mimeType ?? DEFAULT_MIME_TYPE,
           'Content-Length': data.length.toString(),
           Date: new Date().toUTCString(),
           ...init?.headers,
@@ -116,7 +119,7 @@ export async function makeResponse(
   })
 }
 
-function protocolHandler(req: Request): Promise<Response> {
+function protocolHandler(paths: Paths, req: Request): Promise<Response> {
   const url = URL.parse(req.url) as URL
   const pathname = resolvePathname(url)
   if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
@@ -136,20 +139,28 @@ function protocolHandler(req: Request): Promise<Response> {
   return makeResponse('Not found', { status: 404 })
 }
 
-export function init(customHandler: CustomProtocolHandler = protocolHandler) {
+export function init(customHandler?: CustomProtocolHandler) {
+  const paths = {
+    mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
+    mainPublicUnpack: resolve(
+      app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
+      MAIN_PUBLIC_DIR,
+    ),
+    renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
+  }
+
+  if (mimes.size === 0) {
+    initMimeTypes()
+  }
+
+  const handler = customHandler ?? protocolHandler.bind(undefined, paths)
   if (app.isReady()) {
     protocol.handle(SCHEME, (request: Request) =>
-      Promise.resolve(customHandler(request)).then((v) =>
-        v === null ? protocolHandler(request) : v,
+      Promise.resolve(handler(request)).then((v) =>
+        v === null ? protocolHandler(paths, request) : v,
       ),
     )
   } else {
     app.whenReady().then(init.bind(null, customHandler))
-  }
-}
-
-for (const type in MIME_TYPES) {
-  if (type.includes('/')) {
-    addMimeType(type, (MIME_TYPES[type] as string).split(' '))
   }
 }
