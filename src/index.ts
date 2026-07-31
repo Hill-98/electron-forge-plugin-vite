@@ -74,6 +74,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
 
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
     if (appProcess.restarted) {
+      const { main, preload } = await this.#resolveConfigs('development')
+      await this.#buildAll([main, preload])
       return
     }
     await this.#viteServer?.close()
