@@ -63,15 +63,14 @@ test('isEmptyInput test', (t: TestContext) => {
   t.assert.strictEqual(isEmptyInput({ a: '1' }), false)
 })
 
-test('resolveHtmlEntry test', (t: TestContext) =>
-  new Promise((resolve) => {
-    resolveHtmlEntry('./demo/src/renderer').then((entry) => {
-      t.assert.deepStrictEqual(entry, {
-        index: join(process.cwd(), 'demo/src/renderer/index.html'),
-      })
-      resolve()
-    })
-  }))
+test('resolveHtmlEntry test', async (t: TestContext) => {
+  const entry = await resolveHtmlEntry('./tests/renderer')
+  t.assert.deepStrictEqual(entry, {
+    index: join(process.cwd(), 'tests/renderer/index.html'),
+    test: join(process.cwd(), 'tests/renderer/test/index.html'),
+  })
+  t.assert.deepStrictEqual(await resolveHtmlEntry('./x/renderer'), {})
+})
 
 test('resolvePathname test', (t: TestContext) => {
   t.assert.strictEqual(resolvePathname(new URL('app://main/test')), 'test')
