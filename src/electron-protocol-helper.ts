@@ -2,7 +2,7 @@ import { existsSync as exists } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import { parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import electron from 'electron'
+import { app, protocol } from 'electron'
 import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
 import { resolvePathname } from './utils.ts'
 
@@ -42,12 +42,12 @@ const RENDERER_OUT_DIR = import.meta.env.VITE_RENDERER_OUT_DIR ?? 'renderer'
 
 const mimes = new Map()
 const paths = {
-  mainPublic: resolve(electron.app.getAppPath(), MAIN_PUBLIC_DIR),
+  mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
   mainPublicUnpack: resolve(
-    electron.app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
+    app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
     MAIN_PUBLIC_DIR,
   ),
-  renderer: resolve(electron.app.getAppPath(), RENDERER_OUT_DIR),
+  renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
 }
 
 export function addMimeType(type: string, extensions: string[]) {
@@ -137,14 +137,14 @@ function protocolHandler(req: Request): Promise<Response> {
 }
 
 export function init(customHandler: CustomProtocolHandler = protocolHandler) {
-  if (electron.app.isReady()) {
-    electron.protocol.handle(SCHEME, (request: Request) =>
+  if (app.isReady()) {
+    protocol.handle(SCHEME, (request: Request) =>
       Promise.resolve(customHandler(request)).then((v) =>
         v === null ? protocolHandler(request) : v,
       ),
     )
   } else {
-    electron.app.whenReady().then(init.bind(null, customHandler))
+    app.whenReady().then(init.bind(null, customHandler))
   }
 }
 
