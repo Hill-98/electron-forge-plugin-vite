@@ -188,6 +188,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
               output: {
                 comments: isDev,
               },
+              treeshake: {
+                moduleSideEffects: 'no-external',
+              },
             },
             ssr: true,
             target: [`chrome${await getElectronChromeVersion()}`],
