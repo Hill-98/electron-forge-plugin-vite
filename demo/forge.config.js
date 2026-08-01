@@ -9,7 +9,9 @@ const config = {
     ignore(path) {
       return (
         path !== '' &&
-        path.match(/^\/(\.vite|resources|package\.json)/) === null
+        !/^\/(\.vite|(node_modules($|\/@node-rs))|resources|package\.json)/.test(
+          path,
+        )
       )
     },
   },
@@ -17,10 +19,10 @@ const config = {
     new VitePlugin({
       configs: defineConfigs({
         main: {
-          define: {
-            'import.meta.env.VITE_PRELOAD_SCRIPT': JSON.stringify(
-              '.vite/preload/index.cjs',
-            ),
+          build: {
+            rolldownOptions: {
+              external: [/@node-rs/],
+            },
           },
         },
       }),

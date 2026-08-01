@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import * as protocolHelper from '@hill-98/electron-forge-plugin-vite/protocol-helper'
+import { Xxh64 } from '@node-rs/xxhash'
 import { app, BrowserWindow, protocol } from 'electron'
 
 protocol.registerSchemesAsPrivileged([
@@ -22,14 +23,20 @@ app
       width: 800,
       height: 600,
       webPreferences: {
-        preload: join(app.getAppPath(), import.meta.env.VITE_PRELOAD_SCRIPT),
+        preload: join(import.meta.dirname, '/../preload/index.js'),
       },
     })
-    window.webContents.openDevTools()
-    return window.loadURL(import.meta.env.VITE_RENDERER_URL)
+    return window.loadURL(import.meta.env.VITE_RENDERER_URL).then(() => {
+      window.webContents.openDevTools()
+      window.webContents.executeJavaScript(
+        `
+document.body.append(
+  Object.assign(document.createElement('p'), {
+    textContent: 'This is the text from ${import.meta.env.VITE_BUILD_TARGET}: ${new Xxh64().update('Hello World!').digest()}',
+  }))`,
+      )
+    })
   })
   .catch(console.error)
 
 app.on('window-all-closed', app.quit.bind(app))
-
-console.log(`This is the text from ${import.meta.env.VITE_BUILD_TARGET}`)

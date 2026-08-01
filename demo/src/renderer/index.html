@@ -11,8 +11,10 @@
       Object.assign(document.createElement('p'), {
         textContent: `This is the text from ${import.meta.env.VITE_BUILD_TARGET}`,
       }),
+      Object.assign(document.createElement('script'), {
+        src: window.SCHEME.concat('://main/hello.js')
+      }),
     )
   </script>
-  <script src="app://main/hello.js"></script>
 </body>
 </html>
