@@ -9,24 +9,6 @@ const electronVersions = new Map<string, string>()
 
 export const MERGE_ARRAY_SYMBOL: any = Symbol()
 
-export function absolutePath(path: string) {
-  return (path.startsWith('/') ? '/' : '').concat(
-    path
-      .replaceAll('\\', '/')
-      .split('/')
-      .filter((p) => p.trim() !== '' && p !== '.')
-      .reduce((result, p) => {
-        if (p === '..') {
-          result.pop()
-        } else {
-          result.push(p)
-        }
-        return result
-      }, [] as string[])
-      .join('/'),
-  )
-}
-
 export async function getElectronVersion(name: string): Promise<string> {
   const version = electronVersions.get(name)
   if (version) {
@@ -135,10 +117,6 @@ export async function resolveHtmlEntry(
     }
   }
   return result
-}
-
-export function resolvePathname(u: URL) {
-  return absolutePath(decodeURIComponent(u.pathname)).substring(1)
 }
 
 export function trimMergeArray<T>(obj: T): T {

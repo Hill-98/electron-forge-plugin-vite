@@ -20,5 +20,4 @@ export default defineConfig({
   outputOptions: {
     comments: false,
   },
-  unbundle: true,
 })

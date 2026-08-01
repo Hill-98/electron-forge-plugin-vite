@@ -4,7 +4,7 @@ import { parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { app, protocol } from 'electron'
 import type { CustomProtocolHandler } from '../types/electron-protocol-helper.d.ts'
-import { resolvePathname } from './utils.ts'
+import { resolvePathname } from './protocol-helper-utils.ts'
 
 interface Paths {
   mainPublic: string
