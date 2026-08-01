@@ -118,6 +118,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     const isDev = mode === 'development'
     const attachDebugInfo = isDev ? 'full' : 'none'
     const sourcemap = isDebug && isDev ? 'inline' : false
+    const mainEntry = ENTRY.main.find((e) => exists(e))
+    const preloadEntry = ENTRY.preload.find((e) => exists(e))
 
     return {
       main: {
@@ -128,8 +130,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           {
             copyPublicDir: false,
             lib: {
-              entry: ENTRY.main.find((e) => exists(e)) ?? [],
-              formats: this.#pkgType === 'module' ? ['es'] : ['cjs'],
+              entry: mainEntry ? { index: mainEntry } : [],
+              formats: this.#isModulePkg ? ['es'] : ['cjs'],
             },
             minify: false,
             outDir: '.vite/main',
@@ -167,19 +169,17 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       },
       preload: {
         envPrefix: ['PRELOAD_VITE_', 'VITE_'],
-        publicDir: 'resources',
+        publicDir: false,
         ...configs.preload,
         build: mergeDefaults(
           {
-            copyPublicDir: false,
+            lib: {
+              entry: preloadEntry ? { index: preloadEntry } : [],
+              formats: ['cjs'],
+            },
             minify: false,
             outDir: '.vite/preload',
             reportCompressedSize: false,
-            sourcemap,
-            lib: {
-              entry: ENTRY.preload.find((e) => exists(e)) ?? [],
-              formats: ['cjs'],
-            },
             rolldownOptions: {
               experimental: {
                 attachDebugInfo,
@@ -187,11 +187,14 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
               external: [MERGE_ARRAY_SYMBOL, 'electron', 'electron/renderer'],
               output: {
                 comments: isDev,
+                codeSplitting: false,
+                entryFileNames: '[name].js',
               },
               treeshake: {
                 moduleSideEffects: 'no-external',
               },
             },
+            sourcemap,
             ssr: true,
             target: [`chrome${await getElectronChromeVersion()}`],
           },
@@ -211,6 +214,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         base: './',
         root: 'src/renderer',
         envPrefix: ['RENDERER_VITE_', 'VITE_'],
+        input: await resolveHtmlEntry('src/renderer'),
         ...configs.renderer,
         build: mergeDefaults(
           {
@@ -221,7 +225,6 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
             outDir: '../../.vite/renderer',
             reportCompressedSize: false,
             rolldownOptions: {
-              input: await resolveHtmlEntry('src/renderer'),
               experimental: {
                 attachDebugInfo,
               },
