@@ -19,6 +19,7 @@ export interface VitePluginOptions {
   configs?: ConfigObjOrFunc<VitePluginUserConfigs>
   dumpConfigs?: boolean
   manualConfigs?: boolean
+  preloads?: Record<string, string>
 }
 
 /**

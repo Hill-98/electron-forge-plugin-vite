@@ -75,7 +75,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
     if (appProcess.restarted) {
       const { main, preload } = await this.#resolveConfigs('development')
-      await this.#buildAll([main, preload])
+      await this.#buildAll([main])
+      await this.#buildPreloads(preload)
       return
     }
     await this.#viteServer?.close()
@@ -102,6 +103,26 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         this.#viteWatchers.push(result)
       }
     }
+  }
+
+  async #buildPreloads(config: VitePluginConfigs['preload']): Promise<void> {
+    const { preloads } = this.config
+    const keys = preloads ? (Object.keys(preloads) as string[]) : []
+    if (typeof preloads !== 'object' || keys.length === 0) {
+      return this.#buildAll([config])
+    }
+    const configs = keys.map((key, i) => ({
+      ...config,
+      build: {
+        ...config.build,
+        emptyOutDir: i === 0,
+        lib: {
+          ...config.build?.lib,
+          entry: { [key]: preloads[key] as string },
+        },
+      },
+    }))
+    return this.#buildAll(configs)
   }
 
   async #closeAllViteWatcher() {
@@ -301,7 +322,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       .replace(root, '')
       .substring(1)
 
-    await this.#buildAll([main, preload, renderer])
+    await this.#buildAll([main, renderer])
+    await this.#buildPreloads(preload)
     await this.#closeAllViteWatcher()
   }
 
@@ -331,7 +353,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     } else {
       process.env.VITE_RENDERER_URL = `http://localhost:${address?.port ?? 5173}`
     }
-    await this.#buildAll([main, preload])
+    await this.#buildAll([main])
+    await this.#buildPreloads(preload)
   }
 
   async #postStartHook(_: any, appProcess: ElectronProcess): Promise<void> {
