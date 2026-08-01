@@ -56,7 +56,7 @@ export const defineConfigs: typeof defineConfigsType = (configs) => configs
 export class VitePlugin extends PluginBase<VitePluginOptions> {
   name = 'VitePlugin'
 
-  #pkgType = ''
+  #isModulePkg = false
 
   #viteConfigs = new Map<string, VitePluginConfigs>()
 
@@ -87,7 +87,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
   ): Promise<void> {
     for (const config of configs) {
       if (
-        isEmptyInput(config.build?.lib ? config.build?.lib.entry : undefined) &&
+        isEmptyInput(config.input) &&
+        isEmptyInput(config.build?.lib ? config.build?.lib.entry : []) &&
         isEmptyInput(config.build?.rolldownOptions?.input)
       ) {
         continue
@@ -159,10 +160,6 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           'import.meta.env.VITE_BUILD_TARGET': '"main"',
         },
         mode,
-        resolve: {
-          mainFields: ['module', 'jsnext:main', 'jsnext'],
-          ...configs.main.resolve,
-        },
         ssr: {
           noExternal: true,
           ...configs.main.ssr,
@@ -339,7 +336,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
   }
 
   async #readPackageJsonHook(_: any, pkg: Record<string, any>): Promise<any> {
-    this.#pkgType = pkg.type ?? ''
+    this.#isModulePkg = pkg.type === 'module'
     return pkg
   }
 
