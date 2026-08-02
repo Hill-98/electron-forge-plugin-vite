@@ -11,7 +11,7 @@ export default defineConfig({
     neverBundle: true,
   },
   dts: false,
-  entry: ['./src/electron-protocol-helper.ts', './src/index.ts'],
+  entry: ['./src/protocol-helper.ts', './src/index.ts'],
   inputOptions: {
     experimental: {
       attachDebugInfo: 'none',

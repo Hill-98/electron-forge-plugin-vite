@@ -30,8 +30,8 @@
       "types": "./types/vite-env.d.ts"
     },
     "./protocol-helper": {
-      "types": "./types/electron-protocol-helper.d.ts",
-      "import": "./dist/electron-protocol-helper.mjs"
+      "types": "./types/protocol-helper.d.ts",
+      "import": "./dist/protocol-helper.mjs"
     }
   },
   "main": "./dist/index.mjs",
