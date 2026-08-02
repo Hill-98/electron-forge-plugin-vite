@@ -28,6 +28,6 @@
   },
   "dependencies": {
     "@node-rs/xxhash": "^1.7.6",
-    "electron-ipc-flow": "^6.0.1"
+    "electron-ipc-flow": "^6.0.3"
   }
 }
