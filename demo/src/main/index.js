@@ -26,16 +26,17 @@ app
         preload: join(import.meta.dirname, '/../preload/index.js'),
       },
     })
-    return window.loadURL(import.meta.env.VITE_RENDERER_URL).then(() => {
-      window.webContents.openDevTools()
+    window.webContents.on('did-finish-load', () =>
       window.webContents.executeJavaScript(
         `
 document.body.append(
   Object.assign(document.createElement('p'), {
     textContent: 'This is the text from ${import.meta.env.VITE_BUILD_TARGET}: ${new Xxh64().update('Hello World!').digest()}',
   }))`,
-      )
-    })
+      ),
+    )
+    window.webContents.openDevTools()
+    return window.loadURL(import.meta.env.VITE_RENDERER_URL)
   })
   .catch(console.error)
 
