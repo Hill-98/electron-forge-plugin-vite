@@ -3,14 +3,11 @@ import { readFile, stat } from 'node:fs/promises'
 import { parse, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { app, protocol } from 'electron'
-import type { CustomProtocolHandler } from '../types/protocol-helper.d.ts'
+import type {
+  ProtocolHandler,
+  ProtocolHandlerConfig,
+} from '../types/protocol-helper.d.ts'
 import { resolvePathname } from './protocol-helper-utils.ts'
-
-interface Paths {
-  mainPublic: string
-  mainPublicUnpack: string
-  renderer: string
-}
 
 export const DEFAULT_MIME_TYPE = 'application/octet-stream'
 export const SCHEME = 'app'
@@ -119,7 +116,10 @@ export async function makeResponse(
   })
 }
 
-function protocolHandler(paths: Paths, req: Request): Promise<Response> {
+async function protocolHandler(
+  { paths }: ProtocolHandlerConfig,
+  req: Request,
+): Promise<Response> {
   const url = URL.parse(req.url) as URL
   const pathname = resolvePathname(url)
   if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
@@ -139,28 +139,30 @@ function protocolHandler(paths: Paths, req: Request): Promise<Response> {
   return makeResponse('Not found', { status: 404 })
 }
 
-export function init(customHandler?: CustomProtocolHandler) {
-  const paths = {
-    mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
-    mainPublicUnpack: resolve(
-      app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
-      MAIN_PUBLIC_DIR,
-    ),
-    renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
+export function init(handler?: ProtocolHandler) {
+  const handlerConfig: ProtocolHandlerConfig = {
+    paths: {
+      mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
+      mainPublicUnpack: resolve(
+        app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
+        MAIN_PUBLIC_DIR,
+      ),
+      renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
+    },
   }
 
   if (mimes.size === 0) {
     initMimeTypes()
   }
 
-  const handler = customHandler ?? protocolHandler.bind(undefined, paths)
+  const h: ProtocolHandler = handler ?? protocolHandler
   if (app.isReady()) {
     protocol.handle(SCHEME, (request: Request) =>
-      Promise.resolve(handler(request)).then((v) =>
-        v === null ? protocolHandler(paths, request) : v,
+      Promise.resolve(h(handlerConfig, request)).then((v) =>
+        v === null ? protocolHandler(handlerConfig, request) : v,
       ),
     )
   } else {
-    app.whenReady().then(init.bind(null, customHandler))
+    app.whenReady().then(init.bind(null, handler))
   }
 }

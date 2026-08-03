@@ -1,6 +1,17 @@
-export type CustomProtocolHandler = (
+export interface ProtocolHandlerConfig {
+  paths: ProtocolHandlerPaths
+}
+
+export type ProtocolHandler = (
+  config: ProtocolHandlerConfig,
   req: Request,
 ) => Response | null | Promise<Response | null>
+
+export interface ProtocolHandlerPaths {
+  mainPublic: string
+  mainPublicUnpack: string
+  renderer: string
+}
 
 export declare const SCHEME: string
 
@@ -9,4 +20,4 @@ export declare function makeResponse(
   init?: ResponseInit,
 ): Promise<Response>
 
-export declare function init(customHandler?: CustomProtocolHandler): void
+export declare function init(handler?: ProtocolHandler): void
