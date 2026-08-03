@@ -98,7 +98,7 @@ export function mergeDefaults<T>(defaults: T, target?: T): T {
 }
 
 export function relativeFromPwd(to: string): string {
-  return relative(resolve('.'), to)
+  return relative(resolve('.'), to).replaceAll('\\', '/')
 }
 
 export async function resolveHtmlEntry(
