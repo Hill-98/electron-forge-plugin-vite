@@ -1,16 +1,15 @@
 import { existsSync as exists } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import inspector from 'node:inspector'
-import { builtinModules } from 'node:module'
-import { resolve } from 'node:path'
+import { builtinModules, createRequire } from 'node:module'
+import { relative, resolve } from 'node:path'
 import { PluginBase } from '@electron-forge/plugin-base'
 import type {
   ElectronProcess,
   ForgeHookMap,
 } from '@electron-forge/shared-types'
 import type { RolldownWatcher } from 'rolldown'
-import type { ViteDevServer } from 'vite'
 import { build, createServer } from 'vite'
-
 import type {
   defineConfigs as defineConfigsType,
   VitePluginConfigs,
@@ -25,6 +24,20 @@ import {
   mergeDefaults,
   resolveHtmlEntry,
 } from './utils.ts'
+
+interface PackageConfig {
+  isModule?: boolean
+  nativeDependencies?: string[]
+}
+
+interface PackageJson {
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  files?: string[]
+  napi?: object
+  optionalDependencies?: Record<string, string>
+  type?: string
+}
 
 const ENTRY = {
   main: [
@@ -56,11 +69,11 @@ export const defineConfigs: typeof defineConfigsType = (configs) => configs
 export class VitePlugin extends PluginBase<VitePluginOptions> {
   name = 'VitePlugin'
 
-  #isModulePkg = false
+  #packageConfig?: PackageConfig
 
   #viteConfigs = new Map<string, VitePluginConfigs>()
 
-  #viteServer: ViteDevServer | null = null
+  #viteServer: Awaited<ReturnType<typeof createServer>> | null = null
 
   #viteWatchers: RolldownWatcher[] = []
 
@@ -152,7 +165,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
             copyPublicDir: false,
             lib: {
               entry: mainEntry ? { index: mainEntry } : [],
-              formats: this.#isModulePkg ? ['es'] : ['cjs'],
+              formats: this.#packageConfig?.isModule ? ['es'] : ['cjs'],
             },
             minify: false,
             outDir: '.vite/main',
@@ -165,6 +178,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
                 MERGE_ARRAY_SYMBOL,
                 ...builtinModules,
                 ...builtinModules.map((v) => `node:${v}`),
+                ...(this.#packageConfig?.nativeDependencies ?? []),
                 'electron',
                 'electron/renderer',
               ],
@@ -267,7 +281,46 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     }
   }
 
+  async #readPackageJson(): Promise<void> {
+    const pkg: PackageJson = JSON.parse(await readFile('package.json', 'utf-8'))
+    const require = createRequire(import.meta.url)
+    const result = {
+      isModule: pkg.type === 'module',
+      nativeDependencies: [] as string[],
+    }
+    for (const dep of [
+      ...Object.keys(pkg.dependencies ?? {}),
+      ...Object.keys(pkg.devDependencies ?? {}),
+    ]) {
+      try {
+        const depPkg: PackageJson = exists(`node_modules/${dep}/package.json`)
+          ? await readFile(`node_modules/${dep}/package.json`, 'utf-8').then(
+              (content) => JSON.parse(content),
+            )
+          : require(`${dep}/package.json`)
+        if (
+          typeof depPkg.napi === 'object' ||
+          (depPkg.files ?? []).some((file) => file.endsWith('binding.gyp')) ||
+          exists(`node_modules/${dep}/binding.gyp`)
+        ) {
+          result.nativeDependencies.push(
+            dep,
+            ...Object.keys(depPkg.optionalDependencies ?? {}),
+          )
+        }
+      } catch {}
+    }
+    this.#packageConfig = result
+  }
+
+  #relativePath(root: string, path: string): string {
+    return relative(resolve(root), resolve(root, path))
+  }
+
   async #resolveConfigs(mode: string): Promise<VitePluginConfigs> {
+    if (!this.#packageConfig) {
+      await this.#readPackageJson()
+    }
     if (this.#viteConfigs.has(mode)) {
       return this.#viteConfigs.get(mode) as VitePluginConfigs
     }
@@ -278,11 +331,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       preload: {},
       renderer: {},
     }
-
     if (typeof configs === 'function') {
       configs = await configs(mode)
     }
-
     const keys = Object.keys(result) as (keyof VitePluginUserConfigs)[]
     for (const key of keys) {
       if (typeof configs[key] === 'function') {
@@ -291,36 +342,30 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         result[key] = configs[key] ?? {}
       }
     }
-
     if (!this.config.manualConfigs) {
       result = await this.#mergeConfigs(mode, result)
     }
-
+    this.#viteConfigs.set(mode, result)
     if (this.config.dumpConfigs || isDebug) {
       console.log(`electron forge vite plugin configs (${mode}) :`)
       console.dir(result, { depth: null })
     }
-
-    this.#viteConfigs.set(mode, result)
     return result
   }
 
   async #prePackageHook(_: any, platform: string): Promise<void> {
-    const root = resolve('.')
     const { main, preload, renderer } = await this.#resolveConfigs('production')
 
     process.env.VITE_BUILD_PLATFORM = platform
     process.env.VITE_RENDERER_URL = 'app://renderer'
     process.env.VITE_MAIN_PUBLIC_DIR =
       typeof main.publicDir === 'string'
-        ? resolve(main.publicDir).replace(root, '').substring(1)
+        ? this.#relativePath(main.root ?? '.', main.publicDir)
         : undefined
-    process.env.VITE_RENDERER_OUT_DIR = resolve(
+    process.env.VITE_RENDERER_OUT_DIR = this.#relativePath(
       renderer.root ?? '.',
       renderer.build?.outDir ?? '.',
     )
-      .replace(root, '')
-      .substring(1)
 
     await this.#buildAll([main, renderer])
     await this.#buildPreloads(preload)
@@ -328,14 +373,13 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
   }
 
   async #preStartHook(): Promise<void> {
-    const root = resolve('.')
     const { main, preload, renderer } =
       await this.#resolveConfigs('development')
 
     process.env.VITE_BUILD_PLATFORM = process.platform
     process.env.VITE_MAIN_PUBLIC_DIR =
       typeof main.publicDir === 'string'
-        ? resolve(main.publicDir).replace(root, '').substring(1)
+        ? this.#relativePath(main.root ?? '.', main.publicDir)
         : undefined
 
     if (this.#viteServer === null) {
@@ -364,17 +408,11 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     )
   }
 
-  async #readPackageJsonHook(_: any, pkg: Record<string, any>): Promise<any> {
-    this.#isModulePkg = pkg.type === 'module'
-    return pkg
-  }
-
   override getHooks(): ForgeHookMap {
     return {
       prePackage: this.#prePackageHook.bind(this),
       preStart: this.#preStartHook.bind(this),
       postStart: this.#postStartHook.bind(this),
-      readPackageJson: this.#readPackageJsonHook.bind(this),
     }
   }
 }

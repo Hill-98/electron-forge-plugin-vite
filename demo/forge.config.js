@@ -1,4 +1,4 @@
-import { defineConfigs, VitePlugin } from '@hill-98/electron-forge-plugin-vite'
+import { VitePlugin } from '@hill-98/electron-forge-plugin-vite'
 
 /** @type {import('@electron-forge/shared-types').ForgeConfig} */
 const config = {
@@ -15,19 +15,7 @@ const config = {
       )
     },
   },
-  plugins: [
-    new VitePlugin({
-      configs: defineConfigs({
-        main: {
-          build: {
-            rolldownOptions: {
-              external: [/@node-rs/],
-            },
-          },
-        },
-      }),
-    }),
-  ],
+  plugins: [new VitePlugin({})],
 }
 
 export default config
