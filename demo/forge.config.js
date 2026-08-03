@@ -6,14 +6,6 @@ const config = {
     asar: {
       unpack: '**/resources/*.js',
     },
-    ignore(path) {
-      return (
-        path !== '' &&
-        !/^\/(\.vite|(node_modules($|\/@node-rs))|resources|package\.json)/.test(
-          path,
-        )
-      )
-    },
   },
   plugins: [new VitePlugin({})],
 }

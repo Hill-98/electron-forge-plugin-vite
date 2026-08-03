@@ -7,6 +7,7 @@ import { PluginBase } from '@electron-forge/plugin-base'
 import type {
   ElectronProcess,
   ForgeHookMap,
+  ResolvedForgeConfig,
 } from '@electron-forge/shared-types'
 import type { RolldownWatcher } from 'rolldown'
 import { build, createServer } from 'vite'
@@ -138,7 +139,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     return this.#buildAll(configs)
   }
 
-  async #closeAllViteWatcher() {
+  async #closeAllViteWatcher(): Promise<void> {
     while (this.#viteWatchers.length > 0) {
       const viteWatcher = this.#viteWatchers.pop()
       await viteWatcher?.close()
@@ -377,10 +378,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       await this.#resolveConfigs('development')
 
     process.env.VITE_BUILD_PLATFORM = process.platform
-    process.env.VITE_MAIN_PUBLIC_DIR =
-      typeof main.publicDir === 'string'
-        ? this.#relativePath(main.root ?? '.', main.publicDir)
-        : undefined
+    process.env.VITE_MAIN_PUBLIC_DIR = main.publicDir
+      ? this.#relativePath(main.root ?? '.', main.publicDir)
+      : undefined
 
     if (this.#viteServer === null) {
       this.#viteServer = await createServer({
@@ -408,11 +408,58 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     )
   }
 
+  async #resolveForgeConfig(
+    config: ResolvedForgeConfig,
+  ): Promise<ResolvedForgeConfig> {
+    if (config.packagerConfig?.ignore) {
+      return config
+    }
+    const { main, preload, renderer } = await this.#resolveConfigs('production')
+    const includePaths = [
+      this.#relativePath(main.root ?? '.', main.build?.outDir ?? 'main'),
+      ...(main.publicDir
+        ? [this.#relativePath(main.root ?? '.', main.publicDir)]
+        : []),
+      this.#relativePath(
+        preload.root ?? '.',
+        preload.build?.outDir ?? 'preload',
+      ),
+      this.#relativePath(
+        renderer.root ?? '.',
+        renderer.build?.outDir ?? 'renderer',
+      ),
+      ...(this.#packageConfig?.nativeDependencies ?? []).map(
+        (dep) => `node_modules/${dep}`,
+      ),
+      'package.json',
+    ].map((path) => `/${path}`)
+    const customIgnore = this.config.ignore ?? (() => null)
+    return {
+      ...config,
+      packagerConfig: {
+        ...config.packagerConfig,
+        ignore(path) {
+          const result = customIgnore(path)
+          return result !== null
+            ? result
+            : path !== '' &&
+                !includePaths.some(
+                  (iPath) =>
+                    iPath === path ||
+                    path.startsWith(`${iPath}/`) ||
+                    iPath.startsWith(`${path}/`),
+                )
+        },
+      },
+    }
+  }
+
   override getHooks(): ForgeHookMap {
     return {
       prePackage: this.#prePackageHook.bind(this),
       preStart: this.#preStartHook.bind(this),
       postStart: this.#postStartHook.bind(this),
+      resolveForgeConfig: this.#resolveForgeConfig.bind(this),
     }
   }
 }
