@@ -7,14 +7,17 @@ import type {
   ProtocolHandler,
   ProtocolHandlerConfig,
 } from '../types/protocol-helper.d.ts'
+import { makeCspHeader } from './common.ts'
 import { resolvePathname } from './protocol-helper-utils.ts'
 
+export const CSP_POLICY = import.meta.env.VITE_CSP_POLICY ?? null
 export const DEFAULT_MIME_TYPE = 'application/octet-stream'
 export const SCHEME = 'app'
 
 const MAIN_PUBLIC_DIR = import.meta.env.VITE_MAIN_PUBLIC_DIR ?? 'public'
 const RENDERER_OUT_DIR = import.meta.env.VITE_RENDERER_OUT_DIR ?? 'renderer'
 
+const cspPolicyHeader = CSP_POLICY ? makeCspHeader(CSP_POLICY) : null
 const mimes = new Map()
 
 function initMimeTypes() {
@@ -122,21 +125,28 @@ async function protocolHandler(
 ): Promise<Response> {
   const url = URL.parse(req.url) as URL
   const pathname = resolvePathname(url)
+  let response: Response | null = null
   if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
     const path = resolve(paths.mainPublic, pathname)
     const unpackPath = resolve(paths.mainPublicUnpack, pathname)
-    return exists(unpackPath)
-      ? makeResponse(pathToFileURL(unpackPath).toString())
-      : makeResponse(pathToFileURL(path).toString())
+    response = exists(unpackPath)
+      ? await makeResponse(pathToFileURL(unpackPath).toString())
+      : await makeResponse(pathToFileURL(path).toString())
   }
   if (url.host === 'renderer') {
-    return makeResponse(
+    response = await makeResponse(
       pathToFileURL(
         resolve(paths.renderer, pathname === '' ? 'index.html' : pathname),
       ).toString(),
     )
   }
-  return makeResponse('Not found', { status: 404 })
+  if (response === null) {
+    response = await makeResponse('Not found', { status: 404 })
+  }
+  if (cspPolicyHeader) {
+    response.headers.set('Content-Security-Policy', cspPolicyHeader)
+  }
+  return response
 }
 
 export function init(handler?: ProtocolHandler) {

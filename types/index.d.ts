@@ -17,6 +17,7 @@ export type VitePluginUserConfigs = Partial<
 
 export interface VitePluginOptions {
   configs?: ConfigObjOrFunc<VitePluginUserConfigs>
+  csp?: boolean | Record<string, string[]>
   dumpConfigs?: boolean
   ignore?: (path: string) => boolean | null
   manualConfigs?: boolean

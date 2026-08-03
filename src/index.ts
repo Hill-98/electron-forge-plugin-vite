@@ -17,6 +17,7 @@ import type {
   VitePluginOptions,
   VitePluginUserConfigs,
 } from '../types/index.d.ts'
+import { makeCspHeader } from './common.ts'
 import {
   getElectronChromeVersion,
   getElectronNodeVersion,
@@ -71,6 +72,8 @@ export const defineConfigs: typeof defineConfigsType = (configs) => configs
 export class VitePlugin extends PluginBase<VitePluginOptions> {
   name = 'VitePlugin'
 
+  readonly #cspPolicy: Record<string, string[]> | null = null
+
   #packageConfig?: PackageConfig
 
   #viteConfigs = new Map<string, VitePluginConfigs>()
@@ -81,10 +84,16 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
 
   constructor(config: VitePluginOptions) {
     super(config)
-
     this.config ??= {}
-
     this.getHooks = this.getHooks.bind(this)
+    if (this.config.csp ?? true) {
+      this.#cspPolicy =
+        typeof this.config.csp === 'object'
+          ? this.config.csp
+          : {
+              'default-src': ["'self'", 'app://main', 'app://renderer'],
+            }
+    }
   }
 
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
@@ -197,6 +206,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         define: {
           ...configs.main.define,
           'import.meta.env.VITE_BUILD_TARGET': '"main"',
+          'import.meta.env.VITE_CSP_POLICY': JSON.stringify(this.#cspPolicy),
         },
         mode,
         ssr: {
@@ -279,6 +289,16 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           'import.meta.env.VITE_BUILD_TARGET': '"renderer"',
         },
         mode,
+        server: mergeDefaults(
+          this.#cspPolicy === null
+            ? {}
+            : {
+                headers: {
+                  'Content-Security-Policy': makeCspHeader(this.#cspPolicy),
+                },
+              },
+          configs.renderer.server,
+        ),
       },
     }
   }

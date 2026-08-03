@@ -2,6 +2,7 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   define: {
+    'import.meta.env.VITE_CSP_POLICY': 'import.meta.env.VITE_CSP_POLICY',
     'import.meta.env.VITE_MAIN_PUBLIC_DIR':
       'import.meta.env.VITE_MAIN_PUBLIC_DIR',
     'import.meta.env.VITE_RENDERER_OUT_DIR':

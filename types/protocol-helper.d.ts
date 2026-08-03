@@ -13,6 +13,8 @@ export interface ProtocolHandlerPaths {
   renderer: string
 }
 
+export declare const CSP_POLICY: Record<string, string[]> | null
+
 export declare const SCHEME: string
 
 export declare function makeResponse(
