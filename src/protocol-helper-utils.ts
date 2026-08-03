@@ -1,4 +1,4 @@
-export function absolutePath(path: string) {
+export function normalizePath(path: string) {
   return (path.startsWith('/') ? '/' : '').concat(
     path
       .replaceAll('\\', '/')
@@ -17,5 +17,5 @@ export function absolutePath(path: string) {
 }
 
 export function resolvePathname(u: URL) {
-  return absolutePath(decodeURIComponent(u.pathname)).substring(1)
+  return normalizePath(decodeURIComponent(u.pathname)).substring(1)
 }
