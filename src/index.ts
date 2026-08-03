@@ -2,7 +2,7 @@ import { existsSync as exists } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import inspector from 'node:inspector'
 import { builtinModules, createRequire } from 'node:module'
-import { relative, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import { PluginBase } from '@electron-forge/plugin-base'
 import type {
   ElectronProcess,
@@ -23,6 +23,7 @@ import {
   isEmptyInput,
   MERGE_ARRAY_SYMBOL,
   mergeDefaults,
+  relativeFromPwd,
   resolveHtmlEntry,
 } from './utils.ts'
 
@@ -314,10 +315,6 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     this.#packageConfig = result
   }
 
-  #relativePath(root: string, path: string): string {
-    return relative(resolve(root), resolve(root, path))
-  }
-
   async #resolveConfigs(mode: string): Promise<VitePluginConfigs> {
     if (!this.#packageConfig) {
       await this.#readPackageJson()
@@ -361,11 +358,10 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     process.env.VITE_RENDERER_URL = 'app://renderer'
     process.env.VITE_MAIN_PUBLIC_DIR =
       typeof main.publicDir === 'string'
-        ? this.#relativePath(main.root ?? '.', main.publicDir)
+        ? relativeFromPwd(resolve(main.root ?? '.', main.publicDir))
         : undefined
-    process.env.VITE_RENDERER_OUT_DIR = this.#relativePath(
-      renderer.root ?? '.',
-      renderer.build?.outDir ?? '.',
+    process.env.VITE_RENDERER_OUT_DIR = relativeFromPwd(
+      resolve(renderer.root ?? '.', renderer.build?.outDir ?? '.'),
     )
 
     await this.#buildAll([main, renderer])
@@ -379,7 +375,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
 
     process.env.VITE_BUILD_PLATFORM = process.platform
     process.env.VITE_MAIN_PUBLIC_DIR = main.publicDir
-      ? this.#relativePath(main.root ?? '.', main.publicDir)
+      ? relativeFromPwd(resolve(main.root ?? '.', main.publicDir))
       : undefined
 
     if (this.#viteServer === null) {
@@ -416,17 +412,15 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     }
     const { main, preload, renderer } = await this.#resolveConfigs('production')
     const includePaths = [
-      this.#relativePath(main.root ?? '.', main.build?.outDir ?? 'main'),
+      relativeFromPwd(resolve(main.root ?? '.', main.build?.outDir ?? 'main')),
       ...(main.publicDir
-        ? [this.#relativePath(main.root ?? '.', main.publicDir)]
+        ? [relativeFromPwd(resolve(main.root ?? '.', main.publicDir))]
         : []),
-      this.#relativePath(
-        preload.root ?? '.',
-        preload.build?.outDir ?? 'preload',
+      relativeFromPwd(
+        resolve(preload.root ?? '.', preload.build?.outDir ?? 'preload'),
       ),
-      this.#relativePath(
-        renderer.root ?? '.',
-        renderer.build?.outDir ?? 'renderer',
+      relativeFromPwd(
+        resolve(renderer.root ?? '.', renderer.build?.outDir ?? 'renderer'),
       ),
       ...(this.#packageConfig?.nativeDependencies ?? []).map(
         (dep) => `node_modules/${dep}`,

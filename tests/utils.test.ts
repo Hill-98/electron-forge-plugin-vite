@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { type TestContext, test } from 'node:test'
 import {
   getElectronChromeVersion,
@@ -8,6 +8,7 @@ import {
   isObject,
   MERGE_ARRAY_SYMBOL,
   mergeDefaults,
+  relativeFromPwd,
   resolveHtmlEntry,
   trimMergeArray,
 } from '../src/utils.ts'
@@ -91,6 +92,17 @@ test('mergeDefaults test', (t: TestContext) => {
       y: [3],
       z: [4],
     },
+  )
+})
+
+test('relativeFromRoot test', (t: TestContext) => {
+  t.assert.strictEqual(
+    relativeFromPwd(resolve('.', '.vite/main')),
+    '.vite/main',
+  )
+  t.assert.strictEqual(
+    relativeFromPwd(resolve('src/renderer', '../../.vite/renderer')),
+    '.vite/renderer',
   )
 })
 

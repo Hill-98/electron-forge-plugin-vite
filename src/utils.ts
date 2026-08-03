@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync as exists } from 'node:fs'
 import { readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { basename, dirname, resolve } from 'node:path'
+import { basename, dirname, relative, resolve } from 'node:path'
 import electron from 'electron'
 
 const electronVersions = new Map<string, string>()
@@ -95,6 +95,10 @@ export function mergeDefaults<T>(defaults: T, target?: T): T {
     }
   }
   return target
+}
+
+export function relativeFromPwd(to: string): string {
+  return relative(resolve('.'), to)
 }
 
 export async function resolveHtmlEntry(
