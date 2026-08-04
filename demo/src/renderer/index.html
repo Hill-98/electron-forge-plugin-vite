@@ -5,6 +5,7 @@
   <title>Demo</title>
 </head>
 <body>
+  <p>Test Demo!</p>
   <script type="module">
     document.title = `Demo (build platform is ${import.meta.env.VITE_BUILD_PLATFORM})`
     document.body.append(
@@ -12,7 +13,12 @@
         textContent: `This is the text from ${import.meta.env.VITE_BUILD_TARGET}`,
       }),
       Object.assign(document.createElement('script'), {
-        src: window.SCHEME.concat('://main/hello.js')
+        src: `${import.meta.env.VITE_MAIN_URL_PREFIX}/hello.js`
+      }),
+    )
+    document.body.append(
+      Object.assign(document.createElement('p'), {
+        textContent: await (await fetch(`${import.meta.env.VITE_MAIN_URL_PREFIX}/hello`)).text(),
       }),
     )
   </script>

@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import * as protocolHelper from '@hill-98/electron-forge-plugin-vite/protocol-helper'
+import { makeResponse } from '@hill-98/electron-forge-plugin-vite/protocol-helper'
 import { Xxh64 } from '@node-rs/xxhash'
 import { app, BrowserWindow, protocol } from 'electron'
 
@@ -7,14 +8,19 @@ protocol.registerSchemesAsPrivileged([
   {
     scheme: protocolHelper.SCHEME,
     privileges: {
+      allowServiceWorkers: true,
+      corsEnabled: import.meta.env.DEV,
       standard: true,
       secure: true,
+      stream: true,
       supportFetchAPI: true,
     },
   },
 ])
 
-protocolHelper.init()
+protocolHelper.init((_, req) =>
+  req.$path === '/hello' ? makeResponse('Hello World!') : null,
+)
 
 app
   .whenReady()
@@ -36,7 +42,7 @@ document.body.append(
       ),
     )
     window.webContents.openDevTools()
-    return window.loadURL(import.meta.env.VITE_RENDERER_URL)
+    return window.loadURL(import.meta.env.VITE_RENDERER_URL_PREFIX)
   })
   .catch(console.error)
 
