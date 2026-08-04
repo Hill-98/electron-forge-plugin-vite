@@ -304,7 +304,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
   }
 
   async #readPackageJson(): Promise<void> {
-    const pkg: PackageJson = JSON.parse(await readFile('package.json', 'utf-8'))
+    const pkg: PackageJson = JSON.parse(
+      await readFile(process.env.npm_package_json as string, 'utf-8'),
+    )
     const require = createRequire(import.meta.url)
     const result = {
       isModule: pkg.type === 'module',
