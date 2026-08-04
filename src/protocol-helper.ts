@@ -7,6 +7,7 @@ import { app, protocol } from 'electron'
 import type {
   ProtocolHandler,
   ProtocolHandlerConfig,
+  ProtocolRequest,
 } from '../types/protocol-helper.d.ts'
 import { makeCspHeader } from './common.ts'
 import { pathGuard } from './protocol-helper-utils.ts'
@@ -120,40 +121,81 @@ export async function makeResponse(
   })
 }
 
-async function protocolHandler(
+export async function protocolHandler(
   { paths }: ProtocolHandlerConfig,
-  req: Request,
+  req: ProtocolRequest,
 ): Promise<Response> {
-  const url = URL.parse(req.url)
-  ok(url instanceof URL)
-  const pathname = decodeURIComponent(url.pathname).slice(1)
+  const path = req.$path.slice(1)
   let response: Response | null = null
-  if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
-    const path = pathGuard(paths.mainPublic, pathname)
-    const unpackPath = pathGuard(paths.mainPublicUnpack, pathname)
-    response = exists(unpackPath)
-      ? await makeResponse(pathToFileURL(unpackPath).toString())
-      : await makeResponse(pathToFileURL(path).toString())
+  if (typeof MAIN_PUBLIC_DIR === 'string' && req.$host === 'main') {
+    const publicPath = pathGuard(paths.mainPublic, path)
+    const publicUnpackPath = pathGuard(paths.mainPublicUnpack, path)
+    response = exists(publicUnpackPath)
+      ? await makeResponse(pathToFileURL(publicUnpackPath).toString())
+      : await makeResponse(pathToFileURL(publicPath).toString())
   }
-  if (url.host === 'renderer') {
+  if (req.$host === 'renderer') {
     response = await makeResponse(
       pathToFileURL(
-        pathGuard(paths.renderer, pathname === '' ? 'index.html' : pathname),
+        pathGuard(paths.renderer, path === '' ? 'index.html' : path),
       ).toString(),
     )
   }
   if (response === null) {
     response = await makeResponse('Not found', { status: 404 })
   }
-  response.headers.set('Access-Control-Allow-Origin', '*')
   if (cspPolicyHeader) {
     response.headers.set('Content-Security-Policy', cspPolicyHeader)
   }
   return response
 }
 
-export function init(handler?: ProtocolHandler) {
-  const handlerConfig: ProtocolHandlerConfig = {
+async function handleRequest(
+  h: ProtocolHandler,
+  config: ProtocolHandlerConfig,
+  request: Request,
+): Promise<Response> {
+  const u = URL.parse(request.url)
+  ok(u instanceof URL)
+  const i = u.pathname.indexOf('/', 1)
+  Object.defineProperties(request, {
+    $host: {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value: u.pathname.slice(1, i === -1 ? undefined : i),
+    },
+    $path: {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value: (i === -1 ? '' : decodeURIComponent(u.pathname.slice(i))).replace(
+        /^\/+/,
+        '/',
+      ),
+    },
+    $params: {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value: u.searchParams,
+    },
+    $search: {
+      configurable: false,
+      enumerable: true,
+      writable: false,
+      value: u.search,
+    },
+  })
+  let response = await h(config, request as ProtocolRequest)
+  if (response === null) {
+    response = await protocolHandler(config, request as ProtocolRequest)
+  }
+  return response
+}
+
+export function init(...args: [ProtocolHandler]) {
+  const config: ProtocolHandlerConfig = {
     paths: {
       mainPublic: pathGuard(app.getAppPath(), MAIN_PUBLIC_DIR),
       mainPublicUnpack: pathGuard(
@@ -168,14 +210,10 @@ export function init(handler?: ProtocolHandler) {
     initMimeTypes()
   }
 
-  const h: ProtocolHandler = handler ?? protocolHandler
+  const h: ProtocolHandler = args[0] ?? protocolHandler
   if (app.isReady()) {
-    protocol.handle(SCHEME, (request: Request) =>
-      Promise.resolve(h(handlerConfig, request)).then((v) =>
-        v === null ? protocolHandler(handlerConfig, request) : v,
-      ),
-    )
+    protocol.handle(SCHEME, handleRequest.bind(null, h, config))
   } else {
-    app.whenReady().then(init.bind(null, handler))
+    app.whenReady().then(init.bind(null, ...args))
   }
 }

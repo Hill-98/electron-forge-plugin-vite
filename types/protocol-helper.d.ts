@@ -2,9 +2,16 @@ export interface ProtocolHandlerConfig {
   paths: ProtocolHandlerPaths
 }
 
+export interface ProtocolRequest extends Request {
+  $host: string
+  $path: string
+  $params: URLSearchParams
+  $search: string
+}
+
 export type ProtocolHandler = (
   config: ProtocolHandlerConfig,
-  req: Request,
+  req: ProtocolRequest,
 ) => Response | null | Promise<Response | null>
 
 export interface ProtocolHandlerPaths {
@@ -20,6 +27,11 @@ export declare const SCHEME: string
 export declare function makeResponse(
   body: BodyInit | null,
   init?: ResponseInit,
+): Promise<Response>
+
+export declare function protocolHandler(
+  config: ProtocolHandlerConfig,
+  req: ProtocolRequest,
 ): Promise<Response>
 
 export declare function init(handler?: ProtocolHandler): void

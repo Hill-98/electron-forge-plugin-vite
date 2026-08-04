@@ -62,6 +62,8 @@ const ENTRY = {
     'src/preload/preload.ts',
   ],
 }
+const MAIN_URL_PREFIX = 'app://x/main'
+const RENDERER_URL_PREFIX = 'app://x/renderer'
 
 const isDebug = inspector.url() !== undefined
 
@@ -71,8 +73,6 @@ export const defineConfigs: typeof defineConfigsType = (configs) => configs
 
 export class VitePlugin extends PluginBase<VitePluginOptions> {
   name = 'VitePlugin'
-
-  readonly #cspPolicy: Record<string, string[]> | null = null
 
   #packageConfig?: PackageConfig
 
@@ -86,14 +86,6 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     super(config)
     this.config ??= {}
     this.getHooks = this.getHooks.bind(this)
-    if (this.config.csp ?? true) {
-      this.#cspPolicy =
-        typeof this.config.csp === 'object'
-          ? this.config.csp
-          : {
-              'default-src': ["'self'", 'app://main', 'app://renderer'],
-            }
-    }
   }
 
   async #appProcessCloseHandler(appProcess: ElectronProcess): Promise<void> {
@@ -161,6 +153,14 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     configs: VitePluginConfigs,
   ): Promise<VitePluginConfigs> {
     const isDev = mode === 'development'
+    const cspPolicy =
+      this.config.csp === false
+        ? null
+        : typeof this.config.csp === 'object'
+          ? this.config.csp
+          : {
+              'default-src': isDev ? ["'self'", 'app://x'] : ["'self'"],
+            }
     const attachDebugInfo = isDev ? 'full' : 'none'
     const sourcemap = isDebug && isDev ? 'inline' : false
     const mainEntry = ENTRY.main.find((e) => exists(e))
@@ -204,9 +204,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           configs.main.build,
         ),
         define: {
+          'import.meta.env.VITE_CSP_POLICY': JSON.stringify(cspPolicy),
           ...configs.main.define,
           'import.meta.env.VITE_BUILD_TARGET': '"main"',
-          'import.meta.env.VITE_CSP_POLICY': JSON.stringify(this.#cspPolicy),
         },
         mode,
         ssr: {
@@ -258,7 +258,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         },
       },
       renderer: {
-        base: './',
+        base: `${isDev ? '' : RENDERER_URL_PREFIX}/`,
         root: 'src/renderer',
         envPrefix: ['RENDERER_VITE_', 'VITE_'],
         input: await resolveHtmlEntry('src/renderer'),
@@ -290,11 +290,11 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
         },
         mode,
         server: mergeDefaults(
-          this.#cspPolicy === null
+          cspPolicy === null
             ? {}
             : {
                 headers: {
-                  'Content-Security-Policy': makeCspHeader(this.#cspPolicy),
+                  'Content-Security-Policy': makeCspHeader(cspPolicy),
                 },
               },
           configs.renderer.server,
@@ -375,7 +375,8 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     const { main, preload, renderer } = await this.#resolveConfigs('production')
 
     process.env.VITE_BUILD_PLATFORM = platform
-    process.env.VITE_RENDERER_URL = 'app://renderer'
+    process.env.VITE_MAIN_URL_PREFIX = MAIN_URL_PREFIX
+    process.env.VITE_RENDERER_URL_PREFIX = RENDERER_URL_PREFIX
     process.env.VITE_MAIN_PUBLIC_DIR =
       typeof main.publicDir === 'string'
         ? relativeFromPwd(resolve(main.root ?? '.', main.publicDir))
@@ -394,9 +395,11 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
       await this.#resolveConfigs('development')
 
     process.env.VITE_BUILD_PLATFORM = process.platform
+    process.env.VITE_MAIN_URL_PREFIX = MAIN_URL_PREFIX
     process.env.VITE_MAIN_PUBLIC_DIR = main.publicDir
       ? relativeFromPwd(resolve(main.root ?? '.', main.publicDir))
       : undefined
+    process.env.VITE_RENDERER_URL_PREFIX = '/'
 
     if (this.#viteServer === null) {
       this.#viteServer = await createServer({
@@ -409,9 +412,9 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     const address = this.#viteServer.httpServer?.address()
     if (typeof address === 'string') {
       // noinspection HttpUrlsUsage
-      process.env.VITE_RENDERER_URL = `http://${address}`
+      process.env.VITE_RENDERER_URL_PREFIX = `http://${address}`
     } else {
-      process.env.VITE_RENDERER_URL = `http://localhost:${address?.port ?? 5173}`
+      process.env.VITE_RENDERER_URL_PREFIX = `http://localhost:${address?.port ?? 5173}`
     }
     await this.#buildAll([main])
     await this.#buildPreloads(preload)
