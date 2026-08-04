@@ -1,6 +1,7 @@
+import { ok } from 'node:assert/strict'
 import { existsSync as exists } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
-import { parse, resolve } from 'node:path'
+import { parse } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { app, protocol } from 'electron'
 import type {
@@ -8,7 +9,7 @@ import type {
   ProtocolHandlerConfig,
 } from '../types/protocol-helper.d.ts'
 import { makeCspHeader } from './common.ts'
-import { resolvePathname } from './protocol-helper-utils.ts'
+import { pathGuard } from './protocol-helper-utils.ts'
 
 export const CSP_POLICY = import.meta.env.VITE_CSP_POLICY ?? null
 export const DEFAULT_MIME_TYPE = 'application/octet-stream'
@@ -123,12 +124,13 @@ async function protocolHandler(
   { paths }: ProtocolHandlerConfig,
   req: Request,
 ): Promise<Response> {
-  const url = URL.parse(req.url) as URL
-  const pathname = resolvePathname(url)
+  const url = URL.parse(req.url)
+  ok(url instanceof URL)
+  const pathname = decodeURIComponent(url.pathname).slice(1)
   let response: Response | null = null
   if (typeof MAIN_PUBLIC_DIR === 'string' && url.host === 'main') {
-    const path = resolve(paths.mainPublic, pathname)
-    const unpackPath = resolve(paths.mainPublicUnpack, pathname)
+    const path = pathGuard(paths.mainPublic, pathname)
+    const unpackPath = pathGuard(paths.mainPublicUnpack, pathname)
     response = exists(unpackPath)
       ? await makeResponse(pathToFileURL(unpackPath).toString())
       : await makeResponse(pathToFileURL(path).toString())
@@ -136,13 +138,14 @@ async function protocolHandler(
   if (url.host === 'renderer') {
     response = await makeResponse(
       pathToFileURL(
-        resolve(paths.renderer, pathname === '' ? 'index.html' : pathname),
+        pathGuard(paths.renderer, pathname === '' ? 'index.html' : pathname),
       ).toString(),
     )
   }
   if (response === null) {
     response = await makeResponse('Not found', { status: 404 })
   }
+  response.headers.set('Access-Control-Allow-Origin', '*')
   if (cspPolicyHeader) {
     response.headers.set('Content-Security-Policy', cspPolicyHeader)
   }
@@ -152,12 +155,12 @@ async function protocolHandler(
 export function init(handler?: ProtocolHandler) {
   const handlerConfig: ProtocolHandlerConfig = {
     paths: {
-      mainPublic: resolve(app.getAppPath(), MAIN_PUBLIC_DIR),
-      mainPublicUnpack: resolve(
+      mainPublic: pathGuard(app.getAppPath(), MAIN_PUBLIC_DIR),
+      mainPublicUnpack: pathGuard(
         app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'),
         MAIN_PUBLIC_DIR,
       ),
-      renderer: resolve(app.getAppPath(), RENDERER_OUT_DIR),
+      renderer: pathGuard(app.getAppPath(), RENDERER_OUT_DIR),
     },
   }
 

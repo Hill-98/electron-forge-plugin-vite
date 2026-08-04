@@ -1,21 +1,11 @@
-export function normalizePath(path: string) {
-  return (path.startsWith('/') ? '/' : '').concat(
-    path
-      .replaceAll('\\', '/')
-      .split('/')
-      .filter((p) => p.trim() !== '' && p !== '.')
-      .reduce((result, p) => {
-        if (p === '..') {
-          result.pop()
-        } else {
-          result.push(p)
-        }
-        return result
-      }, [] as string[])
-      .join('/'),
-  )
-}
+import { ok } from 'node:assert/strict'
+import { resolve } from 'node:path'
 
-export function resolvePathname(u: URL) {
-  return normalizePath(decodeURIComponent(u.pathname)).substring(1)
+export function pathGuard(root: string, path: string) {
+  const result = resolve(root, path)
+  ok(
+    result.startsWith(`${root}/`),
+    'The resolved path is not in the root path.',
+  )
+  return result
 }
