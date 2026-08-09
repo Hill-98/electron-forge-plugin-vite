@@ -401,7 +401,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
     process.env.VITE_MAIN_PUBLIC_DIR = main.publicDir
       ? relativeFromPwd(resolve(main.root ?? '.', main.publicDir))
       : undefined
-    process.env.VITE_RENDERER_URL_PREFIX = '/'
+    process.env.VITE_RENDERER_URL_PREFIX = ''
 
     if (this.#viteServer === null) {
       this.#viteServer = await createServer({
