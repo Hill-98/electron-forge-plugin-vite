@@ -7,7 +7,7 @@ import { app, protocol } from 'electron'
 import type {
   ProtocolHandler,
   ProtocolHandlerConfig,
-  ProtocolRequest,
+  ProtocolRequest as ProtocolRequestInterface,
 } from '../types/protocol-helper.d.ts'
 import { makeCspHeader } from './common.ts'
 import { pathGuard } from './protocol-helper-utils.ts'
@@ -21,6 +21,29 @@ const RENDERER_OUT_DIR = import.meta.env.VITE_RENDERER_OUT_DIR ?? 'renderer'
 
 const cspPolicyHeader = CSP_POLICY ? makeCspHeader(CSP_POLICY) : null
 const mimes = new Map()
+
+export class ProtocolRequest
+  extends Request
+  implements ProtocolRequestInterface
+{
+  $host: string
+  $params: URLSearchParams
+  $path: string
+  $search: string
+
+  constructor(request: Request) {
+    super(request)
+    const u = URL.parse(request.url)
+    ok(u instanceof URL)
+    const i = u.pathname.indexOf('/', 1)
+    this.$host = u.pathname.slice(1, i === -1 ? undefined : i)
+    this.$path = (
+      i === -1 ? '' : decodeURIComponent(u.pathname.slice(i))
+    ).replace(/^\/+/, '/')
+    this.$params = u.searchParams
+    this.$search = u.search
+  }
+}
 
 function initMimeTypes() {
   const MIME_TYPES: Record<string, string> = {
@@ -155,43 +178,8 @@ async function handleRequest(
   config: ProtocolHandlerConfig,
   request: Request,
 ): Promise<Response> {
-  const u = URL.parse(request.url)
-  ok(u instanceof URL)
-  const i = u.pathname.indexOf('/', 1)
-  Object.defineProperties(request, {
-    $host: {
-      configurable: false,
-      enumerable: true,
-      writable: false,
-      value: u.pathname.slice(1, i === -1 ? undefined : i),
-    },
-    $path: {
-      configurable: false,
-      enumerable: true,
-      writable: false,
-      value: (i === -1 ? '' : decodeURIComponent(u.pathname.slice(i))).replace(
-        /^\/+/,
-        '/',
-      ),
-    },
-    $params: {
-      configurable: false,
-      enumerable: true,
-      writable: false,
-      value: u.searchParams,
-    },
-    $search: {
-      configurable: false,
-      enumerable: true,
-      writable: false,
-      value: u.search,
-    },
-  })
-  let response = await h(config, request as ProtocolRequest)
-  if (response === null) {
-    response = await protocolHandler(config, request as ProtocolRequest)
-  }
-  return response
+  const pr = new ProtocolRequest(request)
+  return (await h(config, pr)) ?? (await protocolHandler(config, pr))
 }
 
 export function init(...args: [ProtocolHandler]) {
