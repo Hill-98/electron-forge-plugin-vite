@@ -39,6 +39,7 @@ interface PackageJson {
   files?: string[]
   napi?: object
   optionalDependencies?: Record<string, string>
+  scripts?: Record<string, string>
   type?: string
 }
 
@@ -324,6 +325,7 @@ export class VitePlugin extends PluginBase<VitePluginOptions> {
           : require(`${dep}/package.json`)
         if (
           typeof depPkg.napi === 'object' ||
+          typeof depPkg.scripts?.install === 'string' ||
           (depPkg.files ?? []).some((file) => file.endsWith('binding.gyp')) ||
           exists(`node_modules/${dep}/binding.gyp`)
         ) {
